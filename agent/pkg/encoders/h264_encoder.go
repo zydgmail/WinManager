@@ -280,9 +280,9 @@ func findBestSizeForH264Profile(profile string, constraints image.Point) (image.
 	profileSizes := map[string][]image.Point{
 		"3.1": []image.Point{
 			image.Point{1920, 1080},
-			image.Point{1280, 720},
-			image.Point{720, 576},
-			image.Point{720, 480},
+			// image.Point{1280, 720},
+			// image.Point{720, 576},
+			// image.Point{720, 480},
 		},
 	}
 	if sizes, exists := profileSizes[profile]; exists {

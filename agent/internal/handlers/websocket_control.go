@@ -178,6 +178,11 @@ func WebSocketControlHandler(c *gin.Context) {
 
 	log.Info("WebSocket控制连接建立成功")
 
+	// 初始化坐标映射（用于将编码坐标转换为屏幕坐标）
+	if err := initCoordinateMapping(); err != nil {
+		log.WithError(err).Warn("初始化坐标映射失败，将使用原始坐标")
+	}
+
 	// 处理控制消息
 	handleControlMessages(ws)
 }
