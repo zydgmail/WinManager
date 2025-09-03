@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "server": {
+    "url": "http://172.17.1.242:8080",
+    "timeout": 30,
+    "retry_interval": 5
+  },
+  "agent": {
+    "http_port": 50052,
+    "grpc_port": 50051,
+    "debug": true,
+    "log_level": "debug"
+  },
+  "screen": {
+    "jpeg_quality": 80,
+    "capture_method": "robotgo"
+  },
+  "encoder": {
+    "default_codec": "h264",
+    "jpeg_quality": 80,
+    "h264_preset": "medium",
+    "h264_tune": "zerolatency",
+    "h264_profile": "baseline",
+    "h264_bitrate": 200000,
+    "vp8_bitrate": 8192,
+    "nvenc_bitrate": 50000000,
+    "nvenc_preset": "fast",
+    "frame_rate": 20,
+    "enabled_codecs": ["h264", "jpeg", "jpeg-turbo", "vp8"],
+    "codec_priority": ["h264", "vp8", "jpeg-turbo", "jpeg"],
+    "custom_settings": {},
+    "debug": {
+      "save_path": "./debug",
+      "save_video_duration": 5
+    }
+  },
+  "input": {
+    "mouse_enabled": true,
+    "keyboard_enabled": true,
+    "paste_enabled": true
+  },
+  "proxy": {
+    "enabled": false,
+    "auto_detect": true,
+    "url": "",
+    "username": "",
+    "password": ""
+  },
+  "monitoring": {
+    "metrics_enabled": true,
+    "metrics_interval": 15,
+    "health_check_enabled": true
+  }
+}

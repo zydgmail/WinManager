@@ -1,0 +1,264 @@
+{
+  "folders": [
+    {
+      "name": "🤖 Agent",
+      "path": "./agent"
+    },
+    {
+      "name": "🔧 Backend",
+      "path": "./backend"
+    },
+    {
+      "name": "🖥️ Frontend",
+      "path": "./frontend"
+    },
+    {
+      "name": "📁 Root",
+      "path": "./"
+    }
+  ],
+  "settings": {
+    // 全局设置
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.git": false,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/*.log": true
+    },
+    
+    // Go 设置 (Agent & Backend)
+    "go.toolsManagement.autoUpdate": true,
+    "go.useLanguageServer": true,
+    "go.lintTool": "golangci-lint",
+    "go.formatTool": "goimports",
+    "go.lintOnSave": "package",
+    "go.vetOnSave": "package",
+    "go.buildOnSave": "off",
+    "go.installDependenciesWhenBuilding": true,
+    
+    // TypeScript/JavaScript 设置 (Frontend)
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.suggest.autoImports": true,
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "javascript.suggest.autoImports": true,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    
+    // Vue 设置 (Frontend)
+    "vetur.validation.template": false,
+    "vetur.validation.script": false,
+    "vetur.validation.style": false,
+    
+    // 编辑器设置
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": true,
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "never",
+      "source.organizeImports": "explicit"
+    },
+    
+    // 文件关联
+    "files.associations": {
+      "*.vue": "vue",
+      "*.go": "go",
+      "*.mod": "go.mod",
+      "*.sum": "go.sum"
+    },
+    
+    // 终端设置
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.cwd": "${workspaceFolder}"
+  },
+  "extensions": {
+    "recommendations": [
+      // Go 扩展
+      "golang.go",
+      
+      // Vue/前端扩展
+      "vue.volar",
+      "vue.vscode-typescript-vue-plugin",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      
+      // 通用扩展
+      "ms-vscode.vscode-json",
+      "redhat.vscode-yaml",
+      "ms-vscode.vscode-typescript-next",
+      "formulahendry.auto-rename-tag",
+      "christian-kohler.path-intellisense",
+      "ms-vscode.vscode-todo-highlight",
+      "gruntfuggly.todo-tree"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🤖 Agent: Build",
+        "type": "shell",
+        "command": "go build -o bin/agent.exe ./cmd/agent",
+        "group": "build",
+        "options": {
+          "cwd": "${workspaceFolder}/agent"
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        },
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "🤖 Agent: Run",
+        "type": "shell",
+        "command": "go run ./cmd/agent",
+        "group": "build",
+        "options": {
+          "cwd": "${workspaceFolder}/agent"
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        },
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "🔧 Backend: Build",
+        "type": "shell",
+        "command": "go build -o bin/backend.exe ./cmd/backend",
+        "group": "build",
+        "options": {
+          "cwd": "${workspaceFolder}/backend"
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        },
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "🔧 Backend: Run",
+        "type": "shell",
+        "command": "go run ./cmd/backend",
+        "group": "build",
+        "options": {
+          "cwd": "${workspaceFolder}/backend"
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        },
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "🖥️ Frontend: Install",
+        "type": "shell",
+        "command": "npm install",
+        "group": "build",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        }
+      },
+      {
+        "label": "🖥️ Frontend: Dev",
+        "type": "shell",
+        "command": "npm run dev",
+        "group": "build",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        }
+      },
+      {
+        "label": "🖥️ Frontend: Build",
+        "type": "shell",
+        "command": "npm run build",
+        "group": "build",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        }
+      },
+      {
+        "label": "🚀 Start All Services",
+        "dependsOrder": "parallel",
+        "dependsOn": [
+          "🔧 Backend: Run",
+          "🖥️ Frontend: Dev"
+        ]
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🤖 Debug Agent",
+        "type": "go",
+        "request": "launch",
+        "mode": "auto",
+        "program": "${workspaceFolder}/agent/cmd/agent",
+        "cwd": "${workspaceFolder}/agent",
+        "env": {},
+        "args": []
+      },
+      {
+        "name": "🔧 Debug Backend",
+        "type": "go",
+        "request": "launch",
+        "mode": "auto",
+        "program": "${workspaceFolder}/backend/cmd/backend",
+        "cwd": "${workspaceFolder}/backend",
+        "env": {},
+        "args": []
+      }
+    ]
+  }
+}

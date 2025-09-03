@@ -1,0 +1,6 @@
+/backend/*.db
+/backend/data.db
+/重构前项目文件
+/backend/build
+/logs
+/agent/debug

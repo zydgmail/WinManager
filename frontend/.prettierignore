@@ -1,0 +1,73 @@
+# 依赖目录
+node_modules/
+dist/
+build/
+
+# 缓存文件
+.cache/
+.vite/
+.nuxt/
+.next/
+
+# 日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 环境文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 构建产物
+*.tgz
+*.tar.gz
+
+# 锁定文件
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 自动生成的文件
+types/auto-imports.d.ts
+types/components.d.ts
+
+# 图标字体文件
+src/**/iconfont/**
+
+# 静态资源
+public/
+src/assets/
+
+# 配置文件（某些不需要格式化）
+*.config.js
+*.config.ts
+vite.config.ts
+postcss.config.js
+tailwind.config.js
+
+# 第三方库文件
+vendor/
+lib/
+
+# 测试覆盖率报告
+coverage/
+
+# 临时文件
+temp/
+tmp/

@@ -1,0 +1,131 @@
+{
+  // 编辑器基础设置
+  "editor.formatOnType": false,
+  "editor.formatOnSave": false,
+  "editor.formatOnPaste": false,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.suggestSelection": "first",
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+
+  // 文件设置
+  "files.autoSave": "afterDelay",
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.associations": {
+    "*.vue": "vue",
+    "*.ts": "typescript",
+    "*.js": "javascript"
+  },
+
+  // 格式化设置 (禁用)
+  "[vue]": {
+    "editor.defaultFormatter": "none"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "none"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "none"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "none"
+  },
+
+  // 代码操作设置
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "never",
+    "source.organizeImports": "explicit"
+  },
+
+  // TypeScript/JavaScript 设置
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.completeFunctionCalls": true,
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.suggest.completeFunctionCalls": true,
+
+  // Vue 设置
+  "vetur.validation.template": false,
+  "vetur.validation.script": false,
+  "vetur.validation.style": false,
+  "vue.codeActions.enabled": true,
+  "vue.complete.casing.tags": "kebab",
+  "vue.complete.casing.props": "camel",
+  "vue.server.hybridMode": false,
+
+  // ESLint 设置
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue"
+  ],
+  "eslint.format.enable": true,
+
+  // Prettier 设置 (禁用)
+  "prettier.enable": false,
+  "prettier.disableLanguages": ["vue", "javascript", "typescript", "css", "scss", "html", "json"],
+
+  // CSS 设置
+  "css.lint.propertyIgnoredDueToDisplay": "ignore",
+
+  // Emmet 设置
+  "emmet.includeLanguages": {
+    "vue-html": "html",
+    "vue": "html"
+  },
+
+  // 排除文件
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": false,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/.vite": true
+  },
+
+  // 搜索排除
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/*.log": true,
+    "**/.vite": true,
+    "**/coverage": true
+  },
+
+  // Git 设置
+  "git.confirmSync": false,
+
+  // 工作台设置
+  "workbench.startupEditor": "newUntitledFile",
+
+  // 插件特定设置
+  "iconify.excludes": [
+    "el"
+  ],
+  "vscodeCustomCodeColor.highlightValue": [
+    "v-loading",
+    "v-auth",
+    "v-copy",
+    "v-longpress",
+    "v-optimize",
+    "v-perms",
+    "v-ripple"
+  ],
+  "vscodeCustomCodeColor.highlightValueColor": "#b392f0"
+}

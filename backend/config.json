@@ -1,0 +1,21 @@
+{
+  "database": {
+    "path": "./data.db"
+  },
+  "server": {
+    "port": ":8080"
+  },
+  "agent": {
+    "http_port": 50052,
+    "grpc_port": 50051,
+    "heartbeat_timeout_seconds": 90,
+    "offline_check_interval": 60
+  },
+  "log": {
+    "level": "debug",
+    "file": "./logs/backend.log",
+    "max_size": 10,
+    "max_backups": 5,
+    "compress": false
+  }
+}

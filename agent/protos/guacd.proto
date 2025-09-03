@@ -1,0 +1,52 @@
+syntax = "proto3";
+package protos;
+
+option go_package = "./;protos";
+
+service Guacd {
+    rpc Mouse (MouseRequest) returns (MouseReply) {}
+    rpc Key (KeyRequest) returns (KeyReply) {}
+    rpc Screenshot (ScreenshotRequest) returns (ScreenshotReply) {}
+    rpc Paste (PasteRequest) returns (PasteReply) {}
+}
+
+// mouse
+message MouseRequest {
+    int32 x = 1;
+    int32 y = 2;
+    int64 method = 3;
+    int64 ts = 4;
+}
+
+message MouseReply {
+    int64 ack = 1;
+}
+
+// screenshot
+message ScreenshotRequest{}
+
+message ScreenshotReply {
+    bytes image = 1;
+}
+
+// key
+message KeyRequest {
+    int32 key = 1;
+    int32 method = 2;
+    int64 ts = 3;
+}
+
+message KeyReply {
+    int64 ack = 1;
+}
+
+// paste
+message PasteRequest {
+    string data = 1;
+}
+
+message PasteReply {
+    int64 ack = 1;
+}
+
+// file use http command download...
