@@ -41,7 +41,7 @@
   "bugs": {
     "url": "https://github.com/pure-admin/vue-pure-admin/issues"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": {
     "name": "xiaoxian521",
     "email": "pureadmin@163.com",

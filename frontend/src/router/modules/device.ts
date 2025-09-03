@@ -26,7 +26,7 @@ export default {
       component: () => import("@/views/device-dashboard/index.vue"),
       meta: {
         title: "设备控制台",
-        showLink: true
+        showLink: false
       }
     },
     {
