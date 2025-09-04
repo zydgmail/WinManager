@@ -98,7 +98,7 @@
           :show-overflow-tooltip="true"
         >
           <template #default="{ row }">
-            <el-link type="primary" @click="handleViewDetail(row.ID || row.id)">
+            <el-link type="primary" @click="handleRemoteConnect(row.ID || row.id)">
               {{ row.hostname }}
             </el-link>
           </template>
@@ -305,6 +305,13 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 远程连接对话框 -->
+    <StreamDialog
+      v-model:visible="showStreamDialog"
+      :device="currentStreamDevice"
+      @close="showStreamDialog = false"
+    />
   </div>
 </template>
 
@@ -320,6 +327,7 @@ import { ArrowDown } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import StreamDialog from "@/views/device-dashboard/components/StreamDialog.vue";
 
 const router = useRouter();
 
@@ -353,6 +361,10 @@ const screenshotLoading = ref(false);
 const screenshotData = ref("");
 const isFullscreen = ref(false);
 const screenshotDialogWidth = ref("90%");
+
+// StreamDialog 相关状态
+const showStreamDialog = ref(false);
+const currentStreamDevice = ref<DeviceInfo | null>(null);
 
 // 获取设备列表
 const getDeviceList = async () => {
@@ -456,27 +468,47 @@ const downloadScreenshot = () => {
   }
 };
 
-// 图片加载完成，调整对话框大小
+// 图片加载完成，调整对话框大小（针对Windows横屏优化）
 const onImageLoad = (event: Event) => {
   const img = event.target as HTMLImageElement;
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
-
-  // 根据图片尺寸和屏幕尺寸计算合适的对话框宽度
+  
+  // Windows屏幕通常是16:9或16:10，优化横屏显示
   const imgRatio = img.naturalWidth / img.naturalHeight;
-  const maxWidth = Math.min(screenWidth * 0.9, 1400);
-  const maxHeight = screenHeight * 0.8;
-
+  const isLandscape = imgRatio > 1.2; // 横屏判断
+  
   let dialogWidth;
-  if (img.naturalWidth > maxWidth) {
-    dialogWidth = maxWidth;
-  } else if (img.naturalHeight > maxHeight) {
-    dialogWidth = maxHeight * imgRatio;
+  
+  if (isLandscape) {
+    // 横屏截图：优先考虑宽度，保持比例
+    const maxWidth = Math.min(screenWidth * 0.85, 1600); // 横屏用更大宽度
+    const maxHeight = screenHeight * 0.75;
+    
+    if (img.naturalWidth > maxWidth) {
+      dialogWidth = maxWidth;
+    } else if (img.naturalHeight > maxHeight) {
+      dialogWidth = maxHeight * imgRatio;
+    } else {
+      dialogWidth = Math.max(img.naturalWidth, 1000); // 横屏最小宽度更大
+    }
+    
+    dialogWidth = Math.min(dialogWidth, maxWidth);
   } else {
-    dialogWidth = Math.max(img.naturalWidth, 800);
+    // 竖屏截图：保持原有逻辑
+    const maxWidth = Math.min(screenWidth * 0.6, 800);
+    const maxHeight = screenHeight * 0.8;
+    
+    if (img.naturalHeight > maxHeight) {
+      dialogWidth = maxHeight * imgRatio;
+    } else {
+      dialogWidth = Math.max(img.naturalWidth, 600);
+    }
+    
+    dialogWidth = Math.min(dialogWidth, maxWidth);
   }
 
-  screenshotDialogWidth.value = `${Math.min(dialogWidth, maxWidth)}px`;
+  screenshotDialogWidth.value = `${dialogWidth}px`;
 };
 
 // 删除设备
@@ -567,7 +599,7 @@ const handleChangeStatus = async () => {
     // 批量更新设备状态
     for (const device of selectedDevices.value) {
       await deviceApi.updateDevice(device.ID || device.id, {
-        status: targetStatus.value
+        status: Number(targetStatus.value)
       });
     }
     ElMessage.success("修改状态成功");
@@ -582,8 +614,14 @@ const handleChangeStatus = async () => {
 
 // 远程连接
 const handleRemoteConnect = (id: number) => {
-  // 跳转到远程控制台页面
-  router.push(`/device/console/${id}`);
+  // 查找对应的设备信息
+  const device = deviceList.value.find(d => (d.ID || d.id) === id);
+  if (device) {
+    currentStreamDevice.value = device;
+    showStreamDialog.value = true;
+  } else {
+    ElMessage.error("设备信息不存在");
+  }
 };
 
 // 批量删除
