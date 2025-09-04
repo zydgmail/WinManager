@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "server": {
-    "url": "http://172.17.1.242:8080",
+    "url": "http://172.17.1.242:9090",
     "timeout": 30,
     "retry_interval": 5
   },

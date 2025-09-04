@@ -60,7 +60,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "http",
 				Aliases: []string{"a"},
-				Value:   ":8080",
+				Value:   config.GetServerPort(), // 使用配置文件中的端口
 				Usage:   "HTTP监听地址",
 			},
 		},
@@ -77,10 +77,10 @@ func run(c *cli.Context) error {
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
 	app.Use(gin.Recovery())
-	
+
 	// 设置路由
 	controllers.InitRouter(app.Group("/api"))
-	
+
 	// 创建HTTP服务器
 	srv := &http.Server{
 		Addr:    c.String("http"),

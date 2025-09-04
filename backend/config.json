@@ -3,7 +3,7 @@
     "path": "./data.db"
   },
   "server": {
-    "port": ":8080"
+    "port": ":9090"
   },
   "agent": {
     "http_port": 50052,
