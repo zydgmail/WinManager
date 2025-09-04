@@ -128,14 +128,15 @@ const wsUrl = computed(() => {
   }
 
   // 根据重构前项目的配置构建WebSocket URL
-  if (window.location.host.startsWith('192.168') || window.location.host.startsWith('localhost')) {
+  if (window.location.host.startsWith('127.0') || window.location.host.startsWith('localhost')) {
     // 本地调试环境，直接连接到agent（与重构前项目保持一致）
     return `ws://${props.deviceIp}:50052/wsstream`
   }
 
   // 生产环境通过后端代理
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${protocol}//${window.location.host}/api/devices/${props.deviceId}/stream`
+  // return `${protocol}//${window.location.host}/api/agent/ws/${props.deviceId}/stream`
+  return `${protocol}//${window.location.host}/api/ws/${props.deviceId}/stream`
 })
 
 // 页面可见性处理
