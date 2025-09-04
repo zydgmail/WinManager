@@ -222,8 +222,7 @@ const handleBatchOperation = (command: string, deviceIds: number[]) => {
       batchRebootDevices(deviceIds)
       break
     case 'screenshot':
-      // 批量刷新截图功能已移除，改为通过自动刷新间隔控制
-      ElMessage.info('请使用右侧的刷新屏幕间隔来控制截图刷新频率')
+      batchRefreshScreenshots(deviceIds)
       break
     case 'delete':
       batchDeleteDevices(deviceIds)
@@ -331,7 +330,28 @@ const batchRebootDevices = async (deviceIds: number[]) => {
   }
 }
 
+const batchRefreshScreenshots = (deviceIds: number[]) => {
+  try {
+    // 获取选中的在线设备
+    const onlineDevices = deviceList.value.filter(device => 
+      deviceIds.includes(device.ID) && device.status === 1
+    )
+    
+    if (onlineDevices.length === 0) {
+      ElMessage.warning('没有选中的在线设备可以刷新截图')
+      return
+    }
 
+    // 通过更新时间戳触发选中设备的截图刷新
+    screenshotRefreshTimestamp.value = Date.now()
+    
+    ElMessage.success(`正在刷新 ${onlineDevices.length} 台设备的截图...`)
+    console.log(`批量刷新截图，设备IDs: ${deviceIds.join(', ')}，在线设备数: ${onlineDevices.length}`)
+  } catch (error) {
+    ElMessage.error('批量刷新截图失败')
+    console.error('批量刷新截图错误:', error)
+  }
+}
 
 const batchDeleteDevices = async (deviceIds: number[]) => {
   try {

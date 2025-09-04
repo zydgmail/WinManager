@@ -170,10 +170,10 @@ export const deviceApi = {
     return http.request<ApiResponse<DeviceInfo>>("get", `/api/instances/${id}/system/info`);
   },
 
-  // 发送键盘指令（通过代理到Agent）
-  sendKeyboard: (id: number, command: string) => {
-    return http.request<void>("get", `/api/proxy/${id}/api/keyboard?cmd=${command}`);
-  },
+  // // 发送键盘指令（通过代理到Agent）
+  // sendKeyboard: (id: number, command: string) => {
+  //   return http.request<void>("get", `/api/proxy/${id}/api/keyboard?cmd=${command}`);
+  // },
 
   // 发送鼠标事件（通过WebSocket实现，这里暂时保留接口但不实际调用）
   sendMouseEvent: (_id: number, _event: { type: string; x: number; y: number; button: number }) => {
@@ -181,19 +181,19 @@ export const deviceApi = {
     return Promise.resolve();
   },
 
-  // 重启设备（通过代理到Agent）
+  // 重启设备（直接调用Agent的reboot接口）
   rebootDevice: (id: number) => {
-    return http.request<void>("post", `/api/proxy/${id}/api/reboot`);
+    return http.request<void>("post", `/api/agent/${id}/reboot`);
   },
 
   // 启动视频流（使用设备ID）
   startStream: (id: number) => {
-    return http.request<void>("get", `/api/stream/${id}/start`);
+    return http.request<void>("get", `/api/agent/${id}/startstream`);
   },
 
   // 停止视频流（使用设备ID）
   stopStream: (id: number) => {
-    return http.request<void>("get", `/api/stream/${id}/stop`);
+    return http.request<void>("get", `/api/agent/${id}/stopstream`);
   }
 };
 

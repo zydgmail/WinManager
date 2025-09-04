@@ -26,7 +26,7 @@
       <div
         class="status-dot"
         :class="{ online: device.status === 1, offline: device.status === 0 }"
-      ></div>
+      />
       <span class="status-text">
         {{ device.status === 1 ? '在线' : '离线' }}
       </span>

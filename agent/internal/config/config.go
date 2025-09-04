@@ -24,6 +24,7 @@ type FileConfig struct {
 	Input      InputConfig      `json:"input"`
 	Proxy      ProxyConfig      `json:"proxy"`
 	Monitoring MonitoringConfig `json:"monitoring"`
+	System     SystemConfig     `json:"system"`
 }
 
 type ServerConfig struct {
@@ -86,6 +87,13 @@ type MonitoringConfig struct {
 	HealthCheckEnabled bool `json:"health_check_enabled"`
 }
 
+type SystemConfig struct {
+	RebootEnabled   bool `json:"reboot_enabled"`
+	RebootDelay     int  `json:"reboot_delay"` // 重启延迟秒数
+	ShutdownEnabled bool `json:"shutdown_enabled"`
+	CommandsEnabled bool `json:"commands_enabled"` // 是否启用系统命令执行
+}
+
 // Config holds the application configuration
 type Config struct {
 	fileConfig    *FileConfig
@@ -146,7 +154,7 @@ func getDefaultConfig() *FileConfig {
 	return &FileConfig{
 		Version: "1.0.0",
 		Server: ServerConfig{
-			URL:           "http://172.17.1.242:8080",
+			URL:           "http://172.17.1.242:9090",
 			Timeout:       30,
 			RetryInterval: 5,
 		},
@@ -195,6 +203,12 @@ func getDefaultConfig() *FileConfig {
 			MetricsEnabled:     true,
 			MetricsInterval:    15,
 			HealthCheckEnabled: true,
+		},
+		System: SystemConfig{
+			RebootEnabled:   true, // 默认禁用重启功能，需要手动启用
+			RebootDelay:     3,    // 默认5秒延迟
+			ShutdownEnabled: true,
+			CommandsEnabled: true,
 		},
 	}
 }
@@ -442,6 +456,30 @@ func (c *Config) GetDebugConfig() *DebugConfig {
 func (c *Config) GetDebugSavePath() string {
 	debugConfig := c.GetDebugConfig()
 	return debugConfig.SavePath
+}
+
+// GetSystemConfig returns the system configuration
+func (c *Config) GetSystemConfig() *SystemConfig {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	if c.fileConfig != nil {
+		return &c.fileConfig.System
+	}
+	// 如果配置文件不存在，使用默认配置中的系统配置
+	defaultConfig := getDefaultConfig()
+	return &defaultConfig.System
+}
+
+// IsRebootEnabled returns whether reboot is enabled
+func (c *Config) IsRebootEnabled() bool {
+	systemConfig := c.GetSystemConfig()
+	return systemConfig.RebootEnabled
+}
+
+// GetRebootDelay returns the reboot delay in seconds
+func (c *Config) GetRebootDelay() int {
+	systemConfig := c.GetSystemConfig()
+	return systemConfig.RebootDelay
 }
 
 // Shutdown gracefully shuts down the configuration

@@ -36,10 +36,7 @@ func InitRouter(ctx *gin.RouterGroup) {
 	// WebSocket路由
 	setupWebSocketRoutes(ctx)
 
-	// 代理路由
-	setupProxyRoutes(ctx)
-
-	// Agent交互路由
+	// Agent交互路由（包含网关转发功能）
 	setupAgentRoutes(ctx)
 
 	logger.Infof("路由配置完成")
@@ -62,13 +59,9 @@ func setupSystemRoutes(ctx *gin.RouterGroup) {
 func setupInstanceRoutes(ctx *gin.RouterGroup) {
 	logger.Infof("设置实例管理路由")
 
-	// 实例注册（兼容原有接口）
 	ctx.POST("/register", Register)
-	// ctx.POST("/agent/register", Register)
 
-	// 心跳接口（兼容原有接口）
 	ctx.PATCH("/heartbeat/:id", Heartbeat)
-	// ctx.PATCH("/agent/heartbeat/:id", Heartbeat)
 
 	// 实例管理
 	ctx.GET("/instances", ListInstances)
@@ -99,19 +92,7 @@ func setupWebSocketRoutes(ctx *gin.RouterGroup) {
 	ctx.GET("/ws/state/:id", StateController())
 
 	// 视频流WebSocket代理
-	ctx.GET("/ws/:id/stream", StreamController())
-}
-
-// setupProxyRoutes 设置代理相关路由
-func setupProxyRoutes(ctx *gin.RouterGroup) {
-	logger.Infof("设置代理路由")
-
-	// 视频流控制代理（使用不同的路径避免冲突）
-	ctx.GET("/stream/:id/start", StartStreamProxy)
-	ctx.GET("/stream/:id/stop", StopStreamProxy)
-
-	// HTTP代理转发
-	ctx.Any("/proxy/:id/*path", ProxyController())
+	ctx.GET("/ws/:id/stream", agent.WebSocketStream)
 }
 
 // setupAgentRoutes 设置Agent交互相关路由
@@ -134,6 +115,9 @@ func setupAgentRoutes(ctx *gin.RouterGroup) {
 		// 命令执行
 		agentGroup.POST("/:id/execute", agent.ExecuteCommand)
 
+		// 系统控制
+		agentGroup.POST("/:id/reboot", agent.RebootDevice)
+
 		// WebSocket接口组 - 单独分组避免路径冲突
 		wsGroup := agentGroup.Group("/ws")
 		{
@@ -141,8 +125,8 @@ func setupAgentRoutes(ctx *gin.RouterGroup) {
 			wsGroup.GET("/:id/stream", agent.WebSocketStream)
 		}
 
-		// // 通用代理接口（放在最后，处理其他所有请求）
-		// agentGroup.Any("/:id/*path", agent.ProxyToAgent)
+		// 网关转发接口（放在最后，处理其他所有请求）
+		// agentGroup.Any("/:id/*path", agent.ForwardToAgent)
 	}
 
 	// WebSocket状态管理（保持原有路径）

@@ -50,5 +50,11 @@
     "metrics_enabled": true,
     "metrics_interval": 15,
     "health_check_enabled": true
+  },
+  "system": {
+    "reboot_enabled": true,
+    "reboot_delay": 3,
+    "shutdown_enabled": true,
+    "commands_enabled": true
   }
 }
