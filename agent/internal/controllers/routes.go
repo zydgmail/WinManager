@@ -42,7 +42,8 @@ func SetupRoutes(router *gin.RouterGroup) {
 
 		// Process management
 		apiGroup.GET("/process", handlers.ProcessHandler)        // ❌ 进程管理（启动/停止进程，未实现）
-		apiGroup.POST("/reboot", handlers.RebootHandler)         // ❌ 系统重启（未实现）
+		apiGroup.POST("/reboot", handlers.RebootHandler)         // ✅ 系统重启（已实现）
+		apiGroup.POST("/shutdown", handlers.ShutdownHandler)     // ✅ 系统关机（已实现）
 		apiGroup.POST("/execscript", handlers.ExecScriptHandler) // ❌ 执行脚本（未实现）
 
 		// File operations

@@ -482,6 +482,18 @@ func (c *Config) GetRebootDelay() int {
 	return systemConfig.RebootDelay
 }
 
+// IsShutdownEnabled returns whether shutdown is enabled
+func (c *Config) IsShutdownEnabled() bool {
+	systemConfig := c.GetSystemConfig()
+	return systemConfig.ShutdownEnabled
+}
+
+// IsCommandsEnabled returns whether commands execution is enabled
+func (c *Config) IsCommandsEnabled() bool {
+	systemConfig := c.GetSystemConfig()
+	return systemConfig.CommandsEnabled
+}
+
 // Shutdown gracefully shuts down the configuration
 func (c *Config) Shutdown() {
 	c.mutex.Lock()

@@ -221,6 +221,9 @@ const handleBatchOperation = (command: string, deviceIds: number[]) => {
     case 'reboot':
       batchRebootDevices(deviceIds)
       break
+    case 'shutdown':
+      batchShutdownDevices(deviceIds)
+      break
     case 'screenshot':
       batchRefreshScreenshots(deviceIds)
       break
@@ -326,6 +329,30 @@ const batchRebootDevices = async (deviceIds: number[]) => {
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('批量重启失败')
+    }
+  }
+}
+
+const batchShutdownDevices = async (deviceIds: number[]) => {
+  try {
+    await ElMessageBox.confirm(`确定要关机选中的 ${deviceIds.length} 台设备吗？`, '批量关机', {
+      type: 'warning',
+      confirmButtonText: '确认关机',
+      cancelButtonText: '取消'
+    })
+
+    const promises = deviceIds.map(deviceId =>
+      deviceApi.shutdownDevice(deviceId).catch(error => {
+        console.error(`关机设备 ${deviceId} 失败:`, error)
+        return null
+      })
+    )
+
+    await Promise.all(promises)
+    ElMessage.success('批量关机指令已发送')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('批量关机失败')
     }
   }
 }

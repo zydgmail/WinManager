@@ -113,10 +113,12 @@ func setupAgentRoutes(ctx *gin.RouterGroup) {
 		agentGroup.GET("/:id/stopstream", agent.StopStream)
 
 		// 命令执行
-		agentGroup.POST("/:id/execute", agent.ExecuteCommand)
+		agentGroup.POST("/:id/execute", agent.ExecuteScript)
 
 		// 系统控制
 		agentGroup.POST("/:id/reboot", agent.RebootDevice)
+		agentGroup.POST("/:id/shutdown", agent.ShutdownDevice)
+		agentGroup.POST("/:id/execscript", agent.ExecuteScript)
 
 		// WebSocket接口组 - 单独分组避免路径冲突
 		wsGroup := agentGroup.Group("/ws")

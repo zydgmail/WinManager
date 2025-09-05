@@ -186,6 +186,16 @@ export const deviceApi = {
     return http.request<void>("post", `/api/agent/${id}/reboot`);
   },
 
+  // 关机设备
+  shutdownDevice: (id: number) => {
+    return http.request<void>("post", `/api/agent/${id}/shutdown`);
+  },
+
+  // 执行脚本命令
+  executeScript: (id: number, data: { command: string; args?: string[]; timeout?: number }) => {
+    return http.request<any>("post", `/api/agent/${id}/execscript`, { data });
+  },
+
   // 启动视频流（使用设备ID）
   startStream: (id: number) => {
     return http.request<void>("get", `/api/agent/${id}/startstream`);
