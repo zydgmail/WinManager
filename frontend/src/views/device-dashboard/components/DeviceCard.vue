@@ -75,11 +75,15 @@
                 :disabled="device.status !== 1"
               >
                 <el-icon><Monitor /></el-icon>
-                控制台
+                远程控制
               </el-dropdown-item>
               <el-dropdown-item :command="`detail_${device.ID}`">
                 <el-icon><View /></el-icon>
-                详情
+                设备详情
+              </el-dropdown-item>
+              <el-dropdown-item :command="`execscript_${device.ID}`">
+                <el-icon><Setting /></el-icon>
+                命令执行
               </el-dropdown-item>
               <el-dropdown-item :command="`screenshot_${device.ID}`" divided>
                 <el-icon><Camera /></el-icon>
@@ -111,6 +115,7 @@ import {
   MoreFilled,
   Picture,
   RefreshRight,
+  Setting,
   View
 } from '@element-plus/icons-vue'
 import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
@@ -346,7 +351,7 @@ onUnmounted(() => {
 }
 
 .device-card.online {
-  /* 移除边框颜色，只保留状态点显示 */
+  /* 在线设备样式 */
 }
 
 .device-card.offline {

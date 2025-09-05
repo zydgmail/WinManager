@@ -112,9 +112,6 @@ func setupAgentRoutes(ctx *gin.RouterGroup) {
 		agentGroup.GET("/:id/startstream", agent.StartStream)
 		agentGroup.GET("/:id/stopstream", agent.StopStream)
 
-		// 命令执行
-		agentGroup.POST("/:id/execute", agent.ExecuteScript)
-
 		// 系统控制
 		agentGroup.POST("/:id/reboot", agent.RebootDevice)
 		agentGroup.POST("/:id/shutdown", agent.ShutdownDevice)

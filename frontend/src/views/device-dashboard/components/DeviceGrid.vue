@@ -29,6 +29,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="reboot">批量重启</el-dropdown-item>
                 <el-dropdown-item command="shutdown">批量关机</el-dropdown-item>
+                <el-dropdown-item command="execscript">批量命令</el-dropdown-item>
                 <el-dropdown-item command="screenshot">刷新截图</el-dropdown-item>
                 <el-dropdown-item divided command="delete">批量删除</el-dropdown-item>
               </el-dropdown-menu>

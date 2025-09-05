@@ -35,6 +35,134 @@
       :device="selectedDevice"
       @close="handleStreamDialogClose"
     />
+
+    <!-- 批量命令对话框 -->
+    <el-dialog
+      v-model="showBatchCommandDialogFlag"
+      title="批量命令执行"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="batchCommandForm" label-width="80px">
+        <el-form-item label="命令">
+          <el-input
+            v-model="batchCommandForm.command"
+            placeholder="请输入要执行的命令，例如：powershell, cmd, notepad"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="参数">
+          <el-input
+            v-model="batchCommandForm.args"
+            placeholder="请输入命令参数，多个参数用空格分隔，例如：-Command Get-Process"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="超时(秒)">
+          <el-input-number
+            v-model="batchCommandForm.timeout"
+            :min="1"
+            :max="300"
+            controls-position="right"
+          />
+        </el-form-item>
+        <el-form-item>
+          <div class="command-examples">
+            <h4 style="margin-bottom: 10px;">常用命令示例：</h4>
+            <div class="example-item">
+              <strong>PowerShell获取进程：</strong>
+              <code>powershell -Command Get-Process</code>
+            </div>
+            <div class="example-item">
+              <strong>CMD查看目录：</strong>
+              <code>cmd /c dir</code>
+            </div>
+            <div class="example-item">
+              <strong>打开记事本：</strong>
+              <code>notepad</code>
+            </div>
+            <div class="example-item">
+              <strong>查看系统信息：</strong>
+              <code>systeminfo</code>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <span style="margin-right: auto; color: #666; font-size: 14px;">
+            将在 {{ batchCommandDeviceIds.length }} 台在线设备上执行
+          </span>
+          <el-button @click="showBatchCommandDialogFlag = false">取消</el-button>
+          <el-button type="primary" @click="executeBatchCommand">执行命令</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 单个设备命令对话框 -->
+    <el-dialog
+      v-model="showSingleCommandDialogFlag"
+      title="设备命令执行"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="singleCommandForm" label-width="80px">
+        <el-form-item label="命令">
+          <el-input
+            v-model="singleCommandForm.command"
+            placeholder="请输入要执行的命令，例如：powershell, cmd, notepad"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="参数">
+          <el-input
+            v-model="singleCommandForm.args"
+            placeholder="请输入命令参数，多个参数用空格分隔，例如：-Command Get-Process"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="超时(秒)">
+          <el-input-number
+            v-model="singleCommandForm.timeout"
+            :min="1"
+            :max="300"
+            controls-position="right"
+          />
+        </el-form-item>
+        <el-form-item>
+          <div class="command-examples">
+            <h4 style="margin-bottom: 10px;">常用命令示例：</h4>
+            <div class="example-item">
+              <strong>PowerShell获取进程：</strong>
+              <code>powershell -Command Get-Process</code>
+            </div>
+            <div class="example-item">
+              <strong>CMD查看目录：</strong>
+              <code>cmd /c dir</code>
+            </div>
+            <div class="example-item">
+              <strong>打开记事本：</strong>
+              <code>notepad</code>
+            </div>
+            <div class="example-item">
+              <strong>查看系统信息：</strong>
+              <code>systeminfo</code>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <span style="margin-right: auto; color: #666; font-size: 14px;">
+            设备ID: {{ singleCommandDeviceId }}
+          </span>
+          <el-button @click="showSingleCommandDialogFlag = false">取消</el-button>
+          <el-button type="primary" @click="executeSingleCommand">执行命令</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -64,6 +192,24 @@ const deviceList = ref<DeviceInfo[]>([])
 // 串流弹窗相关
 const showStreamDialog = ref(false)
 const selectedDevice = ref<DeviceInfo | null>(null)
+
+// 批量命令弹窗相关
+const showBatchCommandDialogFlag = ref(false)
+const batchCommandDeviceIds = ref<number[]>([])
+const batchCommandForm = ref({
+  command: '',
+  args: '',
+  timeout: 30
+})
+
+// 单个设备命令弹窗相关
+const showSingleCommandDialogFlag = ref(false)
+const singleCommandDeviceId = ref<number>(0)
+const singleCommandForm = ref({
+  command: '',
+  args: '',
+  timeout: 30
+})
 
 // 从store获取当前选择的分组ID
 const selectedGroupId = computed({
@@ -202,6 +348,9 @@ const handleDeviceAction = (command: string, device: DeviceInfo) => {
     case 'detail':
       router.push(`/device/detail/${deviceId}`)
       break
+    case 'execscript':
+      showSingleCommandDialog(deviceId)
+      break
     case 'screenshot':
       // 通过更新时间戳触发该设备的截图刷新
       screenshotRefreshTimestamp.value = Date.now()
@@ -223,6 +372,9 @@ const handleBatchOperation = (command: string, deviceIds: number[]) => {
       break
     case 'shutdown':
       batchShutdownDevices(deviceIds)
+      break
+    case 'execscript':
+      showBatchCommandDialog(deviceIds)
       break
     case 'screenshot':
       batchRefreshScreenshots(deviceIds)
@@ -380,6 +532,112 @@ const batchRefreshScreenshots = (deviceIds: number[]) => {
   }
 }
 
+const showBatchCommandDialog = (deviceIds: number[]) => {
+  // 获取选中的在线设备
+  const onlineDevices = deviceList.value.filter(device => 
+    deviceIds.includes(device.ID) && device.status === 1
+  )
+  
+  if (onlineDevices.length === 0) {
+    ElMessage.warning('没有选中的在线设备可以执行命令')
+    return
+  }
+
+  batchCommandDeviceIds.value = onlineDevices.map(device => device.ID)
+  // 重置表单
+  batchCommandForm.value = {
+    command: '',
+    args: '',
+    timeout: 30
+  }
+  showBatchCommandDialogFlag.value = true
+}
+
+const executeBatchCommand = async () => {
+  if (!batchCommandForm.value.command.trim()) {
+    ElMessage.warning('请输入要执行的命令')
+    return
+  }
+
+  try {
+    const { command, args, timeout } = batchCommandForm.value
+    
+    // 解析参数字符串为数组
+    const argsArray = args.trim() ? args.split(' ').filter(arg => arg.trim()) : []
+    
+    const commandData = {
+      command: command.trim(),
+      args: argsArray,
+      timeout: timeout
+    }
+
+    console.log('执行批量命令:', commandData, '设备IDs:', batchCommandDeviceIds.value)
+
+    const promises = batchCommandDeviceIds.value.map(deviceId =>
+      deviceApi.executeScript(deviceId, commandData).catch(error => {
+        console.error(`设备 ${deviceId} 执行命令失败:`, error)
+        return null
+      })
+    )
+
+    await Promise.all(promises)
+    
+    ElMessage.success(`批量命令已发送到 ${batchCommandDeviceIds.value.length} 台设备`)
+    showBatchCommandDialogFlag.value = false
+  } catch (error) {
+    ElMessage.error('批量命令执行失败')
+    console.error('批量命令执行错误:', error)
+  }
+}
+
+const showSingleCommandDialog = (deviceId: number) => {
+  // 检查设备是否在线
+  const device = deviceList.value.find(d => d.ID === deviceId)
+  if (!device || device.status !== 1) {
+    ElMessage.warning('只能对在线设备执行命令')
+    return
+  }
+
+  singleCommandDeviceId.value = deviceId
+  // 重置表单
+  singleCommandForm.value = {
+    command: '',
+    args: '',
+    timeout: 30
+  }
+  showSingleCommandDialogFlag.value = true
+}
+
+const executeSingleCommand = async () => {
+  if (!singleCommandForm.value.command.trim()) {
+    ElMessage.warning('请输入要执行的命令')
+    return
+  }
+
+  try {
+    const { command, args, timeout } = singleCommandForm.value
+    
+    // 解析参数字符串为数组
+    const argsArray = args.trim() ? args.split(' ').filter(arg => arg.trim()) : []
+    
+    const commandData = {
+      command: command.trim(),
+      args: argsArray,
+      timeout: timeout
+    }
+
+    console.log('执行单个设备命令:', commandData, '设备ID:', singleCommandDeviceId.value)
+
+    await deviceApi.executeScript(singleCommandDeviceId.value, commandData)
+    
+    ElMessage.success('命令已发送到设备')
+    showSingleCommandDialogFlag.value = false
+  } catch (error) {
+    ElMessage.error('命令执行失败')
+    console.error('单个设备命令执行错误:', error)
+  }
+}
+
 const batchDeleteDevices = async (deviceIds: number[]) => {
   try {
     await ElMessageBox.confirm(`确定要删除选中的 ${deviceIds.length} 台设备吗？此操作不可恢复！`, '批量删除', {
@@ -455,5 +713,42 @@ onUnmounted(() => {
   .dashboard-main {
     flex-direction: column;
   }
+}
+
+/* 批量命令对话框样式 */
+.command-examples {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.example-item {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.example-item:last-child {
+  margin-bottom: 0;
+}
+
+.example-item strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.example-item code {
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #495057;
+}
+
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 </style>
