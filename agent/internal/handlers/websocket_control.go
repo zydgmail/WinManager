@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"winmanager-agent/internal/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-vgo/robotgo"
@@ -1118,21 +1121,42 @@ func handleNewSystemReboot() error {
 	log.WithFields(log.Fields{
 		"event_type":     "SYSTEM_REBOOT",
 		"action":         "reboot_request",
-		"security_level": "safe_mode",
-		"execution":      "disabled",
+		"security_level": "config_controlled",
+		"execution":      "enabled",
 	}).Info("🔄 收到系统重启命令")
 
+	// 检查配置是否启用重启功能
+	cfg := config.GetGlobalConfig()
+	if !cfg.IsRebootEnabled() {
+		log.WithFields(log.Fields{
+			"reason": "reboot_disabled_in_config",
+			"status": "rejected",
+		}).Warn("⚠️ 重启功能已在配置中禁用")
+		return nil
+	}
+
+	delay := cfg.GetRebootDelay()
 	log.WithFields(log.Fields{
-		"reason":         "security_safety",
-		"status":         "logged_only",
-		"implementation": "commented_out",
-	}).Warn("⚠️ 重启命令已接收，但为了安全起见暂时只记录日志")
+		"delay_seconds": delay,
+		"status":        "scheduled",
+	}).Info("🔄 系统重启已安排")
 
-	// 为了安全起见，暂时只记录日志
-	// 实际的重启逻辑可以在这里实现
-	// 例如: exec.Command("shutdown", "/r", "/t", "0").Run()
+	// 在后台执行重启，避免阻塞WebSocket
+	go func() {
+		time.Sleep(time.Duration(delay) * time.Second)
+		log.Info("🔄 开始执行系统重启")
 
-	log.Info("📝 系统重启请求已记录")
+		cmd := exec.Command("shutdown", "/r", "/t", "0")
+		err := cmd.Run()
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("❌ 系统重启执行失败")
+		} else {
+			log.Info("✅ 系统重启命令已执行")
+		}
+	}()
+
 	return nil
 }
 
