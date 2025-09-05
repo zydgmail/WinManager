@@ -37,8 +37,7 @@ func SetupRoutes(router *gin.RouterGroup) {
 		apiGroup.GET("/coordinate-mapping", handlers.CoordinateMappingStatusHandler) // ✅ 获取坐标映射状态
 
 		// Input handling
-		apiGroup.GET("/keyboard", handlers.KeyboardHandler) // ❌ 键盘输入处理（未实现）
-		apiGroup.POST("/paste", handlers.PasteHandler)      // ❌ 剪贴板粘贴操作（未实现）
+		apiGroup.POST("/paste", handlers.PasteHandler) // ❌ 剪贴板粘贴操作（未实现）
 
 		// Process management
 		apiGroup.GET("/process", handlers.ProcessHandler)        // ❌ 进程管理（启动/停止进程，未实现）

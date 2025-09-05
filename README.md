@@ -23,7 +23,7 @@
 ## 技术栈与来源
 
 - 前端：基于 [pure-vue-admin](https://github.com/pure-admin/vue-pure-admin) 进行二次开发与集成
-- 后端：基于 [GoFrame](https://github.com/gogf/gf) 框架构建路由、配置与服务能力
+- 后端：基于 [Gin](github.com/gin-gonic/gin) 框架构建路由、配置与服务能力
 - Agent：基于 [robotgo](https://github.com/go-vgo/robotgo) 实现屏幕采集与输入控制
 
 ---

@@ -177,13 +177,22 @@ const startStream = async () => {
   }
 }
 
-// 启动控制WebSocket连接（直连agent）
+// 启动控制WebSocket连接
 const startControlConnection = async () => {
   if (!props.device?.lan) return
 
   try {
-    // 直连agent的WebSocket控制接口
-    const wsUrl = `ws://${props.device.lan}:50052/wscontrol`
+    // 根据环境决定连接方式
+    let wsUrl: string
+    if (window.location.host.startsWith('127.0') || window.location.host.startsWith('localhost')) {
+      // 本地调试环境，直接连接到agent
+      wsUrl = `ws://${props.device.lan}:50052/wscontrol`
+    } else {
+      // 生产环境通过后端代理
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      wsUrl = `${protocol}//${window.location.host}/api/ws/${props.device.ID}/control`
+    }
+    
     debug('🔗 启动控制WebSocket连接:', wsUrl)
     wsControl.value = new WebSocket(wsUrl)
 

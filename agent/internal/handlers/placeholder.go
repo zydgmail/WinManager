@@ -15,11 +15,6 @@ import (
 
 // Placeholder handlers for routes that need to be implemented
 
-func KeyboardHandler(c *gin.Context) {
-	log.Debug("Keyboard handler called")
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "Not implemented yet"})
-}
-
 func PasteHandler(c *gin.Context) {
 	log.Debug("Paste handler called")
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "Not implemented yet"})

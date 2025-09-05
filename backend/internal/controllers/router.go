@@ -87,12 +87,11 @@ func setupGroupRoutes(ctx *gin.RouterGroup) {
 func setupWebSocketRoutes(ctx *gin.RouterGroup) {
 	logger.Infof("设置WebSocket路由")
 
-	// Guacamole WebSocket连接
-	ctx.GET("/ws/:id", WsController())
-	ctx.GET("/ws/state/:id", StateController())
-
 	// 视频流WebSocket代理
 	ctx.GET("/ws/:id/stream", agent.WebSocketStream)
+
+	// 控制WebSocket代理
+	ctx.GET("/ws/:id/control", agent.WebSocketControl)
 }
 
 // setupAgentRoutes 设置Agent交互相关路由
@@ -128,9 +127,9 @@ func setupAgentRoutes(ctx *gin.RouterGroup) {
 		// agentGroup.Any("/:id/*path", agent.ForwardToAgent)
 	}
 
-	// WebSocket状态管理（保持原有路径）
-	ctx.GET("/websocket/stats", GetWebSocketStats)
-	ctx.GET("/websocket/instances/:id", GetInstanceConnections)
-	ctx.DELETE("/websocket/instances/:id", CloseInstanceConnections)
-	ctx.DELETE("/websocket/connections/:conn_id", CloseWebSocketConnection)
+	// // WebSocket状态管理（保持原有路径）
+	// ctx.GET("/websocket/stats", GetWebSocketStats)
+	// ctx.GET("/websocket/instances/:id", GetInstanceConnections)
+	// ctx.DELETE("/websocket/instances/:id", CloseInstanceConnections)
+	// ctx.DELETE("/websocket/connections/:conn_id", CloseWebSocketConnection)
 }
