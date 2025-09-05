@@ -22,6 +22,14 @@
             <el-icon><RefreshRight /></el-icon>
             重启
           </el-button>
+          <el-button size="small" type="primary" title="文件上传" @click="showUploadDialog">
+            <el-icon><Upload /></el-icon>
+            上传
+          </el-button>
+          <el-button size="small" type="success" title="文件下载" @click="showDownloadDialog">
+            <el-icon><Download /></el-icon>
+            下载
+          </el-button>
         </div>
 
         <div class="header-controls">
@@ -81,13 +89,94 @@
         </div>
       </div>
     </div>
+
+    <!-- 文件上传对话框 -->
+    <el-dialog
+      v-model="showUploadDialogFlag"
+      title="文件上传"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="80px">
+        <el-form-item label="选择文件">
+          <input
+            type="file"
+            accept="*/*"
+            style="width: 100%"
+            @change="handleFileSelect"
+          />
+        </el-form-item>
+        <el-form-item label="上传目录">
+          <el-input
+            v-model="uploadDir"
+            placeholder="请输入上传目录，例如：./uploads"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item v-if="uploadFile">
+          <div class="file-info">
+            <p><strong>文件名：</strong>{{ uploadFile.name }}</p>
+            <p><strong>文件大小：</strong>{{ (uploadFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+          </div>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="showUploadDialogFlag = false">取消</el-button>
+          <el-button type="primary" :disabled="!uploadFile" @click="executeUpload">上传文件</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 文件下载对话框 -->
+    <el-dialog
+      v-model="showDownloadDialogFlag"
+      title="文件下载"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="80px">
+        <el-form-item label="文件路径">
+          <el-input
+            v-model="downloadPath"
+            placeholder="请输入要下载的文件路径，例如：C:\Users\Desktop\file.txt"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item>
+          <div class="download-tips">
+            <h4 style="margin-bottom: 10px;">路径示例：</h4>
+            <div class="example-item">
+              <strong>Windows：</strong>
+              <code>C:\Users\Desktop\file.txt</code>
+            </div>
+            <div class="example-item">
+              <strong>相对路径：</strong>
+              <code>./uploads/file.txt</code>
+            </div>
+            <div class="example-item">
+              <strong>当前目录：</strong>
+              <code>file.txt</code>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="showDownloadDialogFlag = false">取消</el-button>
+          <el-button type="primary" :disabled="!downloadPath.trim()" @click="executeDownload">下载文件</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { deviceApi, type DeviceInfo } from '@/api/device'
+import { deviceApi, systemApi, type DeviceInfo } from '@/api/device'
 import JMuxerDecoder from '@/views/decoders/JMuxerDecoder.vue'
-import { FullScreen, Monitor, RefreshRight, Setting, VideoCamera } from '@element-plus/icons-vue'
+import { Download, FullScreen, Monitor, RefreshRight, Setting, Upload, VideoCamera } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, ref, watch } from 'vue'
 
@@ -118,6 +207,13 @@ const isStarting = ref(false)
 const isStopping = ref(false)
 const isStreamActive = ref(false)
 const isFullscreen = ref(false)
+
+// 文件操作相关
+const showUploadDialogFlag = ref(false)
+const showDownloadDialogFlag = ref(false)
+const uploadFile = ref<File | null>(null)
+const uploadDir = ref('./uploads')
+const downloadPath = ref('')
 
 // 连接状态
 const connectionStatus = ref<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
@@ -763,6 +859,95 @@ const rebootDevice = async () => {
   }
 }
 
+// 文件上传对话框
+const showUploadDialog = () => {
+  showUploadDialogFlag.value = true
+  uploadFile.value = null
+  uploadDir.value = './uploads'
+}
+
+// 文件下载对话框
+const showDownloadDialog = () => {
+  showDownloadDialogFlag.value = true
+  downloadPath.value = ''
+}
+
+// 处理文件选择
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    uploadFile.value = target.files[0]
+  }
+}
+
+// 执行文件上传
+const executeUpload = async () => {
+  if (!uploadFile.value) {
+    ElMessage.warning('请选择要上传的文件')
+    return
+  }
+
+  if (!props.device?.ID) {
+    ElMessage.error('设备信息不完整')
+    return
+  }
+
+  try {
+    debug('📤 开始上传文件:', {
+      filename: uploadFile.value.name,
+      size: uploadFile.value.size,
+      uploadDir: uploadDir.value
+    })
+
+    const result = await systemApi.uploadFile(props.device.ID, uploadFile.value, uploadDir.value)
+    
+    ElMessage.success(`文件上传成功: ${result.data.filename}`)
+    showUploadDialogFlag.value = false
+    
+    debug('📤 文件上传完成:', result.data)
+  } catch (error) {
+    error_log('📤 文件上传失败:', error)
+    ElMessage.error('文件上传失败')
+  }
+}
+
+// 执行文件下载
+const executeDownload = async () => {
+  if (!downloadPath.value.trim()) {
+    ElMessage.warning('请输入要下载的文件路径')
+    return
+  }
+
+  if (!props.device?.ID) {
+    ElMessage.error('设备信息不完整')
+    return
+  }
+
+  try {
+    debug('📥 开始下载文件:', downloadPath.value)
+
+    const blob = await systemApi.downloadFile(props.device.ID, downloadPath.value)
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = downloadPath.value.split('/').pop() || 'download'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    
+    ElMessage.success('文件下载成功')
+    showDownloadDialogFlag.value = false
+    
+    debug('📥 文件下载完成')
+  } catch (error) {
+    error_log('📥 文件下载失败:', error)
+    ElMessage.error('文件下载失败')
+  }
+}
+
 // 流事件处理
 const handleStreamConnected = () => {
   connectionStatus.value = 'connected'
@@ -1100,5 +1285,55 @@ watch(() => props.visible, async (visible) => {
   .stream-dialog-container {
     --header-height: 36px;
   }
+}
+
+/* 文件操作对话框样式 */
+.file-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.file-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.download-tips {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.example-item {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.example-item:last-child {
+  margin-bottom: 0;
+}
+
+.example-item strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.example-item code {
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #495057;
+}
+
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

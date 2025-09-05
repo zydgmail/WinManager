@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"winmanager-agent/internal/config"
@@ -271,13 +274,146 @@ func ExecScriptHandler(c *gin.Context) {
 }
 
 func DownloadHandler(c *gin.Context) {
-	log.Debug("Download handler called")
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "Not implemented yet"})
+	// 获取文件路径参数
+	filePath := c.Query("path")
+	if filePath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "文件路径参数缺失",
+		})
+		return
+	}
+
+	// 检查文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{
+			"code":    404,
+			"message": "文件不存在",
+		})
+		return
+	}
+
+	// 获取文件信息
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file_path": filePath,
+			"error":     err.Error(),
+		}).Error("获取文件信息失败")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "获取文件信息失败",
+		})
+		return
+	}
+
+	// 设置响应头
+	filename := filepath.Base(filePath)
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
+
+	// 发送文件
+	c.File(filePath)
+
+	log.WithFields(log.Fields{
+		"file_path": filePath,
+		"file_size": fileInfo.Size(),
+		"filename":  filename,
+	}).Info("文件下载成功")
 }
 
 func UploadHandler(c *gin.Context) {
-	log.Debug("Upload handler called")
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "Not implemented yet"})
+	// 获取上传目录参数
+	uploadDir := c.Query("dir")
+	if uploadDir == "" {
+		uploadDir = "./uploads" // 默认上传目录
+	}
+
+	// 确保上传目录存在
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		log.WithFields(log.Fields{
+			"upload_dir": uploadDir,
+			"error":      err.Error(),
+		}).Error("创建上传目录失败")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "创建上传目录失败",
+		})
+		return
+	}
+
+	// 获取上传的文件
+	file, err := c.FormFile("file")
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err.Error(),
+		}).Error("获取上传文件失败")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"message": "获取上传文件失败",
+		})
+		return
+	}
+
+	// 生成安全的文件名
+	filename := file.Filename
+	// 移除路径分隔符，防止目录遍历攻击
+	filename = strings.ReplaceAll(filename, "/", "_")
+	filename = strings.ReplaceAll(filename, "\\", "_")
+
+	// 如果文件名为空，使用时间戳
+	if filename == "" {
+		filename = fmt.Sprintf("upload_%d", time.Now().Unix())
+	}
+
+	// 构建完整文件路径
+	filePath := filepath.Join(uploadDir, filename)
+
+	// 保存文件
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		log.WithFields(log.Fields{
+			"file_path": filePath,
+			"error":     err.Error(),
+		}).Error("保存上传文件失败")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "保存上传文件失败",
+		})
+		return
+	}
+
+	// 获取文件信息
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"file_path": filePath,
+			"error":     err.Error(),
+		}).Error("获取上传文件信息失败")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    500,
+			"message": "获取文件信息失败",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "文件上传成功",
+		"data": gin.H{
+			"filename":   filename,
+			"file_path":  filePath,
+			"file_size":  fileInfo.Size(),
+			"upload_dir": uploadDir,
+		},
+	})
+
+	log.WithFields(log.Fields{
+		"filename":   filename,
+		"file_path":  filePath,
+		"file_size":  fileInfo.Size(),
+		"upload_dir": uploadDir,
+	}).Info("文件上传成功")
 }
 
 func StartProxyHandler(c *gin.Context) {

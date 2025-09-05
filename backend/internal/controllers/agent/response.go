@@ -8,8 +8,8 @@ import (
 
 // 错误码常量
 const (
-	ErrDbReturn  = "DB_RETURN_ERROR"
-	ErrBindJson  = "BIND_JSON_ERROR"
+	ErrDbReturn = "DB_RETURN_ERROR"
+	ErrBindJson = "BIND_JSON_ERROR"
 )
 
 // SuccessRes 成功响应
@@ -41,6 +41,14 @@ func BadRequestRes(c *gin.Context, message string) {
 // InternalErrorRes 内部错误响应
 func InternalErrorRes(c *gin.Context, message string) {
 	c.JSON(http.StatusInternalServerError, gin.H{
+		"code":    -1,
+		"message": message,
+	})
+}
+
+// NotFoundRes 资源未找到响应
+func NotFoundRes(c *gin.Context, message string) {
+	c.JSON(http.StatusNotFound, gin.H{
 		"code":    -1,
 		"message": message,
 	})

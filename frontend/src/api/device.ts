@@ -275,5 +275,40 @@ export const systemApi = {
   // 版本信息
   getVersion: () => {
     return http.request<{ version: string; name: string }>("get", "/api/version");
+  },
+
+  // 文件下载
+  downloadFile: (id: number, filePath: string) => {
+    return http.request<Blob>("get", `/api/agent/${id}/download?path=${encodeURIComponent(filePath)}`, {
+      responseType: 'blob'
+    });
+  },
+
+  // 文件上传
+  uploadFile: (id: number, file: File, uploadDir?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const url = uploadDir 
+      ? `/api/agent/${id}/upload?dir=${encodeURIComponent(uploadDir)}`
+      : `/api/agent/${id}/upload`;
+    
+    return http.request<{
+      code: number;
+      message: string;
+      data: {
+        filename: string;
+        file_path: string;
+        file_size: number;
+        upload_dir: string;
+      };
+    }>("post", url, { 
+      data: formData
+    }, {
+      headers: {
+        // 覆盖默认的Content-Type，让FormData自动设置
+        'Content-Type': undefined
+      }
+    });
   }
 };

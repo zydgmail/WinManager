@@ -38,16 +38,6 @@ export default {
         showLink: false,
         activePath: "/device/list"
       }
-    },
-    {
-      path: "/device/console/:id",
-      name: "DeviceConsole",
-      component: () => import("@/views/device/console/index.vue"),
-      meta: {
-        title: "远程控制台",
-        showLink: false,
-        activePath: "/device/list"
-      }
     }
   ]
 } satisfies RouteConfigsTable;

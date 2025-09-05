@@ -46,8 +46,8 @@ func SetupRoutes(router *gin.RouterGroup) {
 		apiGroup.POST("/execscript", handlers.ExecScriptHandler) //
 
 		// File operations
-		apiGroup.GET("/download", handlers.DownloadHandler) // ❌ 文件下载（未实现）
-		apiGroup.POST("/upload", handlers.UploadHandler)    // ❌ 文件上传（未实现）
+		apiGroup.GET("/download", handlers.DownloadHandler) // ✅ 文件下载（已实现）
+		apiGroup.POST("/upload", handlers.UploadHandler)    // ✅ 文件上传（已实现）
 
 		// Proxy management
 		apiGroup.GET("/startip", handlers.StartProxyHandler)     // ❌ 启动代理IP（未实现）

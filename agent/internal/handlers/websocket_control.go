@@ -609,13 +609,13 @@ func handleNewMouseMove(data map[string]interface{}) error {
 		return err
 	}
 
-	log.WithFields(log.Fields{
-		"x":          x,
-		"y":          y,
-		"action":     "move",
-		"event_type": "MOUSE_MOVE",
-		"raw_data":   fmt.Sprintf("%+v", data),
-	}).Info("🖱️ 执行鼠标移动")
+	// log.WithFields(log.Fields{
+	// 	"x":          x,
+	// 	"y":          y,
+	// 	"action":     "move",
+	// 	"event_type": "MOUSE_MOVE",
+	// 	"raw_data":   fmt.Sprintf("%+v", data),
+	// }).Info("🖱️ 执行鼠标移动")
 
 	robotgo.Move(x, y)
 

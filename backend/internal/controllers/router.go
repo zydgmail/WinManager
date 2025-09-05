@@ -116,6 +116,10 @@ func setupAgentRoutes(ctx *gin.RouterGroup) {
 		agentGroup.POST("/:id/shutdown", agent.ShutdownDevice)
 		agentGroup.POST("/:id/execscript", agent.ExecuteScript)
 
+		// 文件操作
+		agentGroup.GET("/:id/download", agent.DownloadFile)
+		agentGroup.POST("/:id/upload", agent.UploadFile)
+
 		// WebSocket接口组 - 单独分组避免路径冲突
 		wsGroup := agentGroup.Group("/ws")
 		{
