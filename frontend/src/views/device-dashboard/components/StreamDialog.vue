@@ -922,8 +922,13 @@ const convertKeyToGuacamole = (event: KeyboardEvent): number | null => {
     'Shift': 65505,
     'Control': 65507,
     'Alt': 65513,
+    'Meta': 65515,        // Win键 (左)
+    'MetaLeft': 65515,    // 左Win键
+    'MetaRight': 65516,   // 右Win键
+    'OS': 65515,          // OS键 (兼容性)
     'Escape': 65307,
     'Space': 32,
+    'Backquote': 96,      // 反引号键 `
     'ArrowLeft': 65361,
     'ArrowUp': 65362,
     'ArrowRight': 65363,
@@ -971,8 +976,11 @@ const convertKeysymToString = (keysym: number): string => {
     65505: 'shift',
     65507: 'ctrl',
     65513: 'alt',
+    65515: 'cmd',         // 左Win键
+    65516: 'cmd',         // 右Win键
     65307: 'esc',
     32: 'space',
+    96: '`',              // 反引号键
     65361: 'left',
     65362: 'up',
     65363: 'right',

@@ -159,15 +159,12 @@ func WebSocketControlHandler(c *gin.Context) {
 		ticker := time.NewTicker(30 * time.Second) // 每30秒发送一次心跳
 		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-					log.WithError(err).Debug("发送心跳失败，连接可能已断开")
-					return
-				}
-				log.Debug("💓 发送WebSocket心跳")
+		for range ticker.C {
+			if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				log.WithError(err).Debug("发送心跳失败，连接可能已断开")
+				return
 			}
+			log.Debug("💓 发送WebSocket心跳")
 		}
 	}()
 
@@ -582,12 +579,7 @@ func handleRebootCommand() error {
 
 // convertKeysymToRobotgo 将Guacamole keysym转换为robotgo按键字符串
 func convertKeysymToRobotgo(keysym int) string {
-	// 基本字符（ASCII）
-	if keysym >= 32 && keysym <= 126 {
-		return string(rune(keysym))
-	}
-
-	// 特殊按键映射
+	// 特殊按键映射（优先处理）
 	keyMap := map[int]string{
 		65288: "backspace",
 		65289: "tab",
@@ -595,8 +587,11 @@ func convertKeysymToRobotgo(keysym int) string {
 		65505: "shift",
 		65507: "ctrl",
 		65513: "alt",
+		65515: "cmd", // 左Win键
+		65516: "cmd", // 右Win键
 		65307: "esc",
 		32:    "space",
+		96:    "`", // 反引号键 - 特殊处理
 		65361: "left",
 		65362: "up",
 		65363: "right",
@@ -610,6 +605,11 @@ func convertKeysymToRobotgo(keysym int) string {
 
 	if key, exists := keyMap[keysym]; exists {
 		return key
+	}
+
+	// 基本字符（ASCII）- 排除已在特殊映射中处理的字符
+	if keysym >= 32 && keysym <= 126 {
+		return string(rune(keysym))
 	}
 
 	// 功能键 F1-F12
