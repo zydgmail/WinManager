@@ -42,8 +42,11 @@ const (
 	MSG_KEY_COMBO = "KEY_COMBO" // 组合键
 
 	// 剪贴板消息类型
-	MSG_CLIPBOARD_PASTE = "CLIPBOARD_PASTE" // 粘贴文本
-	MSG_CLIPBOARD_COPY  = "CLIPBOARD_COPY"  // 复制文本
+	MSG_CLIPBOARD_PASTE  = "CLIPBOARD_PASTE"  // 将文本注入输入目标（打字输入）
+	MSG_CLIPBOARD_COPY   = "CLIPBOARD_COPY"   // 复制文本（保留，兼容）
+	MSG_CLIPBOARD_SET    = "CLIPBOARD_SET"    // 设置Agent剪贴板（不打字）
+	MSG_CLIPBOARD_GET    = "CLIPBOARD_GET"    // 请求Agent当前剪贴板
+	MSG_CLIPBOARD_UPDATE = "CLIPBOARD_UPDATE" // Agent->客户端：剪贴板变更通知
 
 	// 系统控制消息类型
 	MSG_SYSTEM_DESKTOP     = "SYSTEM_DESKTOP"     // 显示桌面
@@ -186,6 +189,8 @@ func WebSocketControlHandler(c *gin.Context) {
 		log.WithError(err).Warn("初始化坐标映射失败，将使用原始坐标")
 	}
 
+	// 剪贴板同步改为事件驱动：不启动轮询监听
+
 	// 处理控制消息
 	handleControlMessages(ws)
 }
@@ -210,14 +215,15 @@ func handleControlMessages(ws *websocket.Conn) {
 		// 尝试解析新格式的JSON消息
 		var msg ControlMessage
 		if err := json.Unmarshal(messageData, &msg); err == nil {
-			// 新格式消息
-			log.WithFields(log.Fields{
-				"type":      msg.Type,
-				"data":      msg.Data,
-				"timestamp": msg.Timestamp,
-				"id":        msg.ID,
-				"data_json": fmt.Sprintf("%+v", msg.Data),
-			}).Info("📨 解析新格式控制消息成功")
+			// 剪贴板消息特殊日志
+			if msg.Type == MSG_CLIPBOARD_SET || msg.Type == MSG_CLIPBOARD_GET || msg.Type == MSG_CLIPBOARD_PASTE {
+				log.WithFields(log.Fields{
+					"type":        msg.Type,
+					"data":        msg.Data,
+					"timestamp":   msg.Timestamp,
+					"raw_message": string(messageData),
+				}).Info("📋 [Agent] 收到剪贴板消息")
+			}
 
 			if err := handleNewControlMessage(ws, msg); err != nil {
 				log.WithError(err).Errorf("处理新格式控制消息失败: %s", msg.Type)
@@ -284,6 +290,15 @@ func sendSuccessResponse(ws *websocket.Conn, message string, data map[string]int
 func handleNewControlMessage(ws *websocket.Conn, msg ControlMessage) error {
 	log.WithField("type", msg.Type).Debug("处理新格式控制消息")
 
+	// 剪贴板相关消息特殊日志
+	if msg.Type == MSG_CLIPBOARD_SET || msg.Type == MSG_CLIPBOARD_GET || msg.Type == MSG_CLIPBOARD_PASTE {
+		log.WithFields(log.Fields{
+			"type":      msg.Type,
+			"data":      msg.Data,
+			"timestamp": msg.Timestamp,
+		}).Info("📋 [Agent] 收到剪贴板消息")
+	}
+
 	switch msg.Type {
 	// 鼠标事件
 	case MSG_MOUSE_MOVE:
@@ -326,6 +341,10 @@ func handleNewControlMessage(ws *websocket.Conn, msg ControlMessage) error {
 	// 剪贴板事件
 	case MSG_CLIPBOARD_PASTE:
 		return handleNewClipboardPaste(msg.Data)
+	case MSG_CLIPBOARD_SET:
+		return handleClipboardSet(msg.Data)
+	case MSG_CLIPBOARD_GET:
+		return handleClipboardGet(ws)
 
 	// 系统控制事件
 	case MSG_SYSTEM_DESKTOP:
@@ -1069,6 +1088,86 @@ func handleNewClipboardPaste(data map[string]interface{}) error {
 	}).Info("✅ 粘贴文本完成")
 	return nil
 }
+
+// handleClipboardSet 设置Agent剪贴板（不打字）
+func handleClipboardSet(data map[string]interface{}) error {
+	textVal, ok := data["text"]
+	if !ok {
+		log.Error("📋 [Agent] CLIPBOARD_SET失败：缺少text参数")
+		return fmt.Errorf("缺少text参数")
+	}
+	text, ok := textVal.(string)
+	if !ok {
+		log.Error("📋 [Agent] CLIPBOARD_SET失败：text参数格式错误")
+		return fmt.Errorf("text参数格式错误")
+	}
+
+	preview := text
+	if len(text) > 100 {
+		preview = text[:100] + "..."
+	}
+	log.WithFields(log.Fields{
+		"text_length":  len(text),
+		"text_preview": preview,
+		"event_type":   "CLIPBOARD_SET",
+	}).Info("📋 [Agent] 设置Agent剪贴板")
+
+	err := robotgo.WriteAll(text)
+	if err != nil {
+		log.WithError(err).Error("📋 [Agent] 设置剪贴板失败")
+		return err
+	}
+	log.Info("📋 [Agent] 剪贴板设置成功")
+	return nil
+}
+
+// handleClipboardGet 读取Agent剪贴板，并回写到当前ws客户端
+func handleClipboardGet(ws *websocket.Conn) error {
+	log.Info("📋 [Agent] 收到CLIPBOARD_GET请求，开始读取剪贴板")
+
+	// 添加更详细的剪贴板状态检查
+	log.WithFields(log.Fields{
+		"timestamp": time.Now().Format("2006-01-02 15:04:05"),
+		"action":    "clipboard_read_attempt",
+	}).Info("📋 [Agent] 尝试读取剪贴板")
+
+	text, err := robotgo.ReadAll()
+	if err != nil {
+		log.WithError(err).Error("📋 [Agent] 读取剪贴板失败")
+		return fmt.Errorf("读取剪贴板失败: %w", err)
+	}
+
+	preview := text
+	if len(text) > 100 {
+		preview = text[:100] + "..."
+	}
+
+	log.WithFields(log.Fields{
+		"text_length":  len(text),
+		"text_preview": preview,
+		"is_empty":     text == "",
+		"raw_text":     fmt.Sprintf("%q", text), // 显示原始文本，包括特殊字符
+	}).Info("📋 [Agent] 读取剪贴板成功，发送CLIPBOARD_UPDATE")
+
+	msg := ControlMessage{
+		Type: MSG_CLIPBOARD_UPDATE,
+		Data: map[string]interface{}{
+			"text":        text,
+			"text_length": len(text),
+			"char_count":  len([]rune(text)),
+		},
+		Timestamp: time.Now().Unix(),
+	}
+	err = sendControlMessage(ws, msg)
+	if err != nil {
+		log.WithError(err).Error("📋 [Agent] 发送CLIPBOARD_UPDATE失败")
+		return err
+	}
+	log.Info("📋 [Agent] CLIPBOARD_UPDATE发送成功")
+	return nil
+}
+
+// 轮询剪贴板监听已移除，改为事件驱动：收到 MSG_CLIPBOARD_GET 时读取并返回
 
 // 新格式系统控制事件处理函数
 func handleNewSystemDesktop() error {

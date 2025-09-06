@@ -26,7 +26,6 @@ func SetupRoutes(router *gin.RouterGroup) {
 		// Encoder and capture APIs
 		apiGroup.GET("/encoders", handlers.EncoderInfoHandler)                 // ✅ 获取支持的编码器和捕获方法信息
 		apiGroup.GET("/encoded-screenshot", handlers.EncodedScreenshotHandler) // ✅ 获取编码后的截图（支持多种编码格式）
-		apiGroup.GET("/stream", handlers.StreamingHandler)                     // ❌ HTTP视频流接口（未实现，返回501）
 
 		// Video streaming control
 		apiGroup.GET("/startstream", handlers.StartStreamHandler)   // ✅ 启动视频流服务
@@ -36,11 +35,9 @@ func SetupRoutes(router *gin.RouterGroup) {
 		// Coordinate mapping status
 		apiGroup.GET("/coordinate-mapping", handlers.CoordinateMappingStatusHandler) // ✅ 获取坐标映射状态
 
-		// Input handling
-		apiGroup.POST("/paste", handlers.PasteHandler) // ❌ 剪贴板粘贴操作（未实现）
+		// Input handling（剪贴板通过WebSocket实现，无HTTP接口）
 
 		// Process management
-		apiGroup.GET("/process", handlers.ProcessHandler)        // ❌ 进程管理（启动/停止进程，未实现）
 		apiGroup.POST("/reboot", handlers.RebootHandler)         // ✅ 系统重启（已实现）
 		apiGroup.POST("/shutdown", handlers.ShutdownHandler)     // ✅ 系统关机（已实现）
 		apiGroup.POST("/execscript", handlers.ExecScriptHandler) //
@@ -54,13 +51,6 @@ func SetupRoutes(router *gin.RouterGroup) {
 		apiGroup.GET("/stopip", handlers.StopProxyHandler)       // ❌ 停止代理IP（未实现）
 		apiGroup.GET("/checkproxy", handlers.CheckProxyHandler)  // ❌ 检查代理状态（未实现）
 		apiGroup.GET("/proxylist", handlers.GetProxyListHandler) // ❌ 获取代理列表（未实现）
-
-		// Command execution
-		apiGroup.POST("/cmd", handlers.CmdHandler)              // ❌ 执行系统命令（未实现）
-		apiGroup.GET("/serverconf", handlers.ServerConfHandler) // ❌ 获取服务器配置（未实现）
-
-		// Session management
-		apiGroup.Any("/session", handlers.SessionHandler) // ❌ 会话管理（未实现）
 	}
 
 	// Watchdog routes (for compatibility)

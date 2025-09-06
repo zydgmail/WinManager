@@ -1,10 +1,12 @@
 package agent
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"winmanager-backend/internal/config"
 	"winmanager-backend/internal/logger"
@@ -183,6 +185,17 @@ func WebSocketControl(c *gin.Context) {
 				errChan <- err
 				return
 			}
+
+			// 剪贴板消息特殊日志
+			if messageType == websocket.TextMessage {
+				var msg map[string]interface{}
+				if err := json.Unmarshal(message, &msg); err == nil {
+					if msgType, ok := msg["type"].(string); ok && strings.Contains(msgType, "CLIPBOARD") {
+						logger.Infof("📋 [Backend] 转发剪贴板消息 客户端→Agent: %s", msgType)
+					}
+				}
+			}
+
 			if err := agentConn.WriteMessage(messageType, message); err != nil {
 				logger.Errorf("向Agent发送控制消息失败: %v", err)
 				errChan <- err
@@ -207,6 +220,27 @@ func WebSocketControl(c *gin.Context) {
 				errChan <- err
 				return
 			}
+
+			// 剪贴板消息特殊日志
+			if messageType == websocket.TextMessage {
+				var msg map[string]interface{}
+				if err := json.Unmarshal(message, &msg); err == nil {
+					if msgType, ok := msg["type"].(string); ok && strings.Contains(msgType, "CLIPBOARD") {
+						logger.Infof("📋 [Backend] 转发剪贴板消息 Agent→客户端: %s", msgType)
+						// 如果是CLIPBOARD_UPDATE，显示消息体内容
+						if msgType == "CLIPBOARD_UPDATE" {
+							if data, ok := msg["data"].(map[string]interface{}); ok {
+								textLength := 0
+								if textLen, ok := data["text_length"].(float64); ok {
+									textLength = int(textLen)
+								}
+								logger.Infof("📋 [Backend] CLIPBOARD_UPDATE消息体: text_length=%d", textLength)
+							}
+						}
+					}
+				}
+			}
+
 			if err := clientConn.WriteMessage(messageType, message); err != nil {
 				logger.Errorf("向客户端发送控制消息失败: %v", err)
 				errChan <- err

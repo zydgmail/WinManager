@@ -30,6 +30,29 @@
             <el-icon><Download /></el-icon>
             下载
           </el-button>
+          <!-- 剪贴板测试按钮 -->
+          <el-button
+            size="small"
+            type="warning"
+            title="远程到本地：获取Agent剪贴板内容到本地"
+            @click="testRemoteToLocal"
+          >
+            <el-icon>
+              <svg viewBox="0 0 1024 1024" width="16" height="16"><path fill="currentColor" d="M832 320h-64v-64a64 64 0 0 0-64-64h-96.64A127.36 127.36 0 0 0 384 64a127.36 127.36 0 0 0-223.36 64H64a64 64 0 0 0-64 64v672a64 64 0 0 0 64 64h768a64 64 0 0 0 64-64V384a64 64 0 0 0-64-64zM384 128a63.68 63.68 0 0 1 60.8 44.8A127.36 127.36 0 0 0 320 288h-64a63.68 63.68 0 0 1-60.8-44.8A127.36 127.36 0 0 0 384 128z m384 704H64V192h96a127.36 127.36 0 0 0 223.36 64H704v64H256a64 64 0 0 0-64 64v384a64 64 0 0 0 64 64h512z"/></svg>
+            </el-icon>
+            远程到本地
+          </el-button>
+          <el-button
+            size="small"
+            type="info"
+            title="本地到远程：将本地剪贴板内容发送到Agent"
+            @click="testLocalToRemote"
+          >
+            <el-icon>
+              <svg viewBox="0 0 1024 1024" width="16" height="16"><path fill="currentColor" d="M832 320h-64v-64a64 64 0 0 0-64-64h-96.64A127.36 127.36 0 0 0 384 64a127.36 127.36 0 0 0-223.36 64H64a64 64 0 0 0-64 64v672a64 64 0 0 0 64 64h768a64 64 0 0 0 64-64V384a64 64 0 0 0-64-64zM384 128a63.68 63.68 0 0 1 60.8 44.8A127.36 127.36 0 0 0 320 288h-64a63.68 63.68 0 0 1-60.8-44.8A127.36 127.36 0 0 0 384 128z m384 704H64V192h96a127.36 127.36 0 0 0 223.36 64H704v64H256a64 64 0 0 0-64 64v384a64 64 0 0 0 64 64h512z"/></svg>
+            </el-icon>
+            本地到远程
+          </el-button>
         </div>
 
         <div class="header-controls">
@@ -207,6 +230,9 @@ const isStarting = ref(false)
 const isStopping = ref(false)
 const isStreamActive = ref(false)
 const isFullscreen = ref(false)
+// 剪贴板同步（事件驱动）
+let lastLocalClipboard = ''
+let lastAgentClipboard = ''
 
 // 文件操作相关
 const showUploadDialogFlag = ref(false)
@@ -295,6 +321,8 @@ const startControlConnection = async () => {
     wsControl.value.onopen = () => {
       warn('✅ 控制WebSocket连接成功:', wsUrl)
       isControlEnabled.value = true
+      // 初次连接时拉取一次Agent剪贴板
+      sendControlMessage(MSG_TYPES.CLIPBOARD_GET)
     }
 
     wsControl.value.onclose = (event) => {
@@ -320,6 +348,23 @@ const startControlConnection = async () => {
           data: response.data,
           timestamp: response.timestamp ? new Date(response.timestamp).toISOString() : 'N/A'
         })
+
+        if (response.type === MSG_TYPES.CLIPBOARD_UPDATE && response.data && typeof response.data.text === 'string') {
+          const agentText: string = response.data.text
+          console.log('📋 [前端] 收到Agent剪贴板更新:', {
+            text: agentText.substring(0, 100) + (agentText.length > 100 ? '...' : ''),
+            length: agentText.length,
+            lastLocalClipboard: lastLocalClipboard.substring(0, 100) + (lastLocalClipboard.length > 100 ? '...' : ''),
+            willWrite: agentText !== lastLocalClipboard
+          })
+          // 避免循环：如果是我们刚写过的内容则跳过
+          if (agentText !== lastLocalClipboard) {
+            lastAgentClipboard = agentText
+            writeTextToLocalClipboard(agentText)
+          } else {
+            console.log('📋 [前端] 跳过写入：内容相同')
+          }
+        }
       } catch (e) {
         debug('📨 收到非JSON控制响应:', event.data)
       }
@@ -442,6 +487,9 @@ const MSG_TYPES = {
 
   // 剪贴板消息类型
   CLIPBOARD_PASTE: 'CLIPBOARD_PASTE',
+  CLIPBOARD_SET: 'CLIPBOARD_SET',
+  CLIPBOARD_GET: 'CLIPBOARD_GET',
+  CLIPBOARD_UPDATE: 'CLIPBOARD_UPDATE',
 
   // 系统控制消息类型
   SYSTEM_DESKTOP: 'SYSTEM_DESKTOP',
@@ -458,6 +506,17 @@ const sendControlMessage = (type: string, data: any = {}) => {
       timestamp: Date.now(),
       id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     }
+    
+    // 剪贴板相关消息特殊日志
+    if (type.includes('CLIPBOARD')) {
+      console.log('📋 [前端] 发送剪贴板消息:', {
+        type,
+        data: type === 'CLIPBOARD_SET' ? { textLength: data.text?.length || 0 } : data,
+        timestamp: new Date().toISOString()
+      })
+      console.log('📋 [前端] 实际发送的JSON:', JSON.stringify(message))
+    }
+    
     debug('🎮 发送控制消息:', {
       type,
       data,
@@ -665,6 +724,8 @@ const handleKeyDown = (event: KeyboardEvent) => {
       key: keysym,
       keyStr: keyStr
     })
+
+    // 移除剪贴板相关监听，只保留基本键盘控制
   } else {
     warn('⌨️ 无法转换按键:', { key: event.key, code: event.code })
   }
@@ -690,6 +751,8 @@ const handleKeyUp = (event: KeyboardEvent) => {
       key: keysym,
       keyStr: keyStr
     })
+
+    // 移除剪贴板相关监听，只保留基本键盘控制
   } else {
     warn('⌨️ 无法转换按键:', { key: event.key, code: event.code })
   }
@@ -713,6 +776,116 @@ const handlePaste = (event: ClipboardEvent) => {
     warn('📋 粘贴操作失败: 无有效文本数据')
   }
 }
+
+// 移除不再使用的剪贴板函数，只保留测试按钮功能
+
+// 写入本地剪贴板
+const writeTextToLocalClipboard = async (text: string) => {
+  try {
+    console.log('📋 [前端] 写入本地剪贴板:', {
+      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+      length: text.length,
+      hasClipboardAPI: !!navigator.clipboard
+    })
+    
+    // 检查 Clipboard API 是否可用
+    if (!navigator.clipboard) {
+      console.warn('📋 [前端] Clipboard API 不可用，尝试降级方案')
+      // 降级方案：使用传统的 document.execCommand
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          console.log('📋 [前端] 使用 execCommand 写入剪贴板成功')
+          lastLocalClipboard = text
+        } else {
+          console.error('📋 [前端] execCommand 写入剪贴板失败')
+        }
+      } finally {
+        document.body.removeChild(textArea)
+      }
+      return
+    }
+    
+    await navigator.clipboard.writeText(text)
+    lastLocalClipboard = text
+    console.log('📋 [前端] 本地剪贴板写入成功')
+  } catch (e) {
+    console.error('📋 [前端] 写入本地剪贴板失败:', e)
+    
+    // 如果 Clipboard API 失败，尝试降级方案
+    try {
+      console.log('📋 [前端] 尝试降级方案：execCommand')
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      const successful = document.execCommand('copy')
+      if (successful) {
+        console.log('📋 [前端] 降级方案成功：execCommand 写入剪贴板')
+        lastLocalClipboard = text
+      } else {
+        console.error('📋 [前端] 降级方案也失败：execCommand 写入失败')
+      }
+      document.body.removeChild(textArea)
+    } catch (fallbackError) {
+      console.error('📋 [前端] 降级方案异常:', fallbackError)
+    }
+  }
+}
+
+// 远程到本地：获取Agent剪贴板内容到本地
+const testRemoteToLocal = async () => {
+  console.log('📋 [前端] 远程到本地：获取Agent剪贴板内容')
+  sendControlMessage(MSG_TYPES.CLIPBOARD_GET)
+}
+
+// 本地到远程：将本地剪贴板内容发送到Agent
+const testLocalToRemote = async () => {
+  console.log('📋 [前端] 本地到远程：发送本地剪贴板内容到Agent')
+  
+  try {
+    if (navigator.clipboard) {
+      const text = await navigator.clipboard.readText()
+      if (text) {
+        console.log('📋 [前端] 读取到本地文本，发送到Agent:', { length: text.length })
+        sendControlMessage(MSG_TYPES.CLIPBOARD_SET, { text })
+        return
+      }
+    }
+    
+    // 降级：弹窗输入
+    const manual = window.prompt('浏览器无法读取剪贴板，请粘贴文本并确认：')
+    if (manual && manual.length > 0) {
+      console.log('📋 [前端] 手动输入文本，发送到Agent:', { length: manual.length })
+      sendControlMessage(MSG_TYPES.CLIPBOARD_SET, { text: manual })
+    } else {
+      console.warn('📋 [前端] 未获取到文本内容')
+    }
+  } catch (e) {
+    console.error('📋 [前端] 读取本地剪贴板失败:', e)
+    // 降级：弹窗输入
+    const manual = window.prompt('读取剪贴板失败，请粘贴文本并确认：')
+    if (manual && manual.length > 0) {
+      sendControlMessage(MSG_TYPES.CLIPBOARD_SET, { text: manual })
+    }
+  }
+}
+
+// 不再使用轮询，本地在复制/剪切操作后主动推送
 
 const handleMouseEnter = () => {
   if (interactiveAreaRef.value) {
@@ -973,6 +1146,8 @@ const handleStreamError = (message: string) => {
   ElMessage.error(`视频流错误: ${message}`)
 }
 
+// 取消全局复制/剪切监听，避免与程序写入产生回流和歧义
+
 // 监听全屏状态变化
 const handleFullscreenChange = () => {
   isFullscreen.value = !!document.fullscreenElement
@@ -987,6 +1162,16 @@ watch(() => props.visible, async (visible) => {
     isStreamActive.value = false
     isControlEnabled.value = false
 
+    // 检查剪贴板支持情况
+    console.log('📋 [前端] 剪贴板环境检查:', {
+      hasClipboardAPI: !!navigator.clipboard,
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+      isSecureContext: window.isSecureContext
+    })
+
+    // 不再添加全局复制/剪切监听（只处理串流区域内的组合键）
+
     // 监听全屏事件
     document.addEventListener('fullscreenchange', handleFullscreenChange)
 
@@ -997,6 +1182,7 @@ watch(() => props.visible, async (visible) => {
   } else {
     // 弹窗关闭时清理
     document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    // 无全局监听可移除
     stopControlConnection()
     isFullscreen.value = false
     isStreamActive.value = false

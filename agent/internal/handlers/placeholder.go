@@ -18,10 +18,7 @@ import (
 
 // Placeholder handlers for routes that need to be implemented
 
-func PasteHandler(c *gin.Context) {
-	log.Debug("Paste handler called")
-	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "Not implemented yet"})
-}
+// 剪贴板HTTP接口已废弃，使用WebSocket控制接口进行剪贴板同步与粘贴
 
 func ProcessHandler(c *gin.Context) {
 	log.Debug("Process handler called")
