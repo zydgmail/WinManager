@@ -788,30 +788,9 @@ const writeTextToLocalClipboard = async (text: string) => {
       hasClipboardAPI: !!navigator.clipboard
     })
     
-    // 检查 Clipboard API 是否可用
+    // 只使用 Clipboard API，避免 document.execCommand 干扰视频流
     if (!navigator.clipboard) {
-      console.warn('📋 [前端] Clipboard API 不可用，尝试降级方案')
-      // 降级方案：使用传统的 document.execCommand
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.style.position = 'fixed'
-      textArea.style.left = '-999999px'
-      textArea.style.top = '-999999px'
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      
-      try {
-        const successful = document.execCommand('copy')
-        if (successful) {
-          console.log('📋 [前端] 使用 execCommand 写入剪贴板成功')
-          lastLocalClipboard = text
-        } else {
-          console.error('📋 [前端] execCommand 写入剪贴板失败')
-        }
-      } finally {
-        document.body.removeChild(textArea)
-      }
+      console.warn('📋 [前端] Clipboard API 不可用，跳过写入本地剪贴板')
       return
     }
     
@@ -821,29 +800,7 @@ const writeTextToLocalClipboard = async (text: string) => {
   } catch (e) {
     console.error('📋 [前端] 写入本地剪贴板失败:', e)
     
-    // 如果 Clipboard API 失败，尝试降级方案
-    try {
-      console.log('📋 [前端] 尝试降级方案：execCommand')
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      textArea.style.position = 'fixed'
-      textArea.style.left = '-999999px'
-      textArea.style.top = '-999999px'
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      
-      const successful = document.execCommand('copy')
-      if (successful) {
-        console.log('📋 [前端] 降级方案成功：execCommand 写入剪贴板')
-        lastLocalClipboard = text
-      } else {
-        console.error('📋 [前端] 降级方案也失败：execCommand 写入失败')
-      }
-      document.body.removeChild(textArea)
-    } catch (fallbackError) {
-      console.error('📋 [前端] 降级方案异常:', fallbackError)
-    }
+    // 不再使用 document.execCommand 降级方案，避免干扰视频流
   }
 }
 
@@ -867,21 +824,37 @@ const testLocalToRemote = async () => {
       }
     }
     
-    // 降级：弹窗输入
-    const manual = window.prompt('浏览器无法读取剪贴板，请粘贴文本并确认：')
-    if (manual && manual.length > 0) {
-      console.log('📋 [前端] 手动输入文本，发送到Agent:', { length: manual.length })
-      sendControlMessage(MSG_TYPES.CLIPBOARD_SET, { text: manual })
-    } else {
-      console.warn('📋 [前端] 未获取到文本内容')
-    }
+    // 降级：使用非阻塞的ElementPlus输入框
+    ElMessageBox.prompt('浏览器无法读取剪贴板，请粘贴文本：', '剪贴板内容', {
+      confirmButtonText: '发送到远程',
+      cancelButtonText: '取消',
+      inputType: 'textarea',
+      inputPlaceholder: '请粘贴要发送到远程的文本内容...'
+    }).then(({ value }) => {
+      if (value && value.length > 0) {
+        console.log('📋 [前端] 手动输入文本，发送到Agent:', { length: value.length })
+        sendControlMessage(MSG_TYPES.CLIPBOARD_SET, { text: value })
+      } else {
+        console.warn('📋 [前端] 未获取到文本内容')
+      }
+    }).catch(() => {
+      console.log('📋 [前端] 用户取消了手动输入')
+    })
   } catch (e) {
     console.error('📋 [前端] 读取本地剪贴板失败:', e)
-    // 降级：弹窗输入
-    const manual = window.prompt('读取剪贴板失败，请粘贴文本并确认：')
-    if (manual && manual.length > 0) {
-      sendControlMessage(MSG_TYPES.CLIPBOARD_SET, { text: manual })
-    }
+    // 降级：使用非阻塞的ElementPlus输入框
+    ElMessageBox.prompt('读取剪贴板失败，请粘贴文本：', '剪贴板内容', {
+      confirmButtonText: '发送到远程',
+      cancelButtonText: '取消',
+      inputType: 'textarea',
+      inputPlaceholder: '请粘贴要发送到远程的文本内容...'
+    }).then(({ value }) => {
+      if (value && value.length > 0) {
+        sendControlMessage(MSG_TYPES.CLIPBOARD_SET, { text: value })
+      }
+    }).catch(() => {
+      console.log('📋 [前端] 用户取消了手动输入')
+    })
   }
 }
 
