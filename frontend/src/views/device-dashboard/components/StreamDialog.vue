@@ -233,6 +233,7 @@ const isFullscreen = ref(false)
 // 剪贴板同步（事件驱动）
 let lastLocalClipboard = ''
 let lastAgentClipboard = ''
+let isUserRequestedClipboard = false // 标记是否为用户主动请求剪贴板
 
 // 文件操作相关
 const showUploadDialogFlag = ref(false)
@@ -321,8 +322,7 @@ const startControlConnection = async () => {
     wsControl.value.onopen = () => {
       warn('✅ 控制WebSocket连接成功:', wsUrl)
       isControlEnabled.value = true
-      // 初次连接时拉取一次Agent剪贴板
-      sendControlMessage(MSG_TYPES.CLIPBOARD_GET)
+      // 不再在初次连接时自动拉取剪贴板，避免弹窗
     }
 
     wsControl.value.onclose = (event) => {
@@ -360,9 +360,16 @@ const startControlConnection = async () => {
           // 避免循环：如果是我们刚写过的内容则跳过
           if (agentText !== lastLocalClipboard) {
             lastAgentClipboard = agentText
-            writeTextToLocalClipboard(agentText)
+            // 只有用户主动请求时才写入本地剪贴板
+            if (isUserRequestedClipboard) {
+              writeTextToLocalClipboard(agentText)
+              isUserRequestedClipboard = false // 重置标志
+            } else {
+              console.log('📋 [前端] 非用户主动请求，跳过写入本地剪贴板')
+            }
           } else {
             console.log('📋 [前端] 跳过写入：内容相同')
+            isUserRequestedClipboard = false // 重置标志
           }
         }
       } catch (e) {
@@ -788,25 +795,56 @@ const writeTextToLocalClipboard = async (text: string) => {
       hasClipboardAPI: !!navigator.clipboard
     })
     
-    // 只使用 Clipboard API，避免 document.execCommand 干扰视频流
+    // 检查 Clipboard API 可用性
     if (!navigator.clipboard) {
-      console.warn('📋 [前端] Clipboard API 不可用，跳过写入本地剪贴板')
+      console.warn('📋 [前端] Clipboard API 不可用，原因可能是：')
+      console.warn('1. 非HTTPS环境 (当前:', window.location.protocol, ')')
+      console.warn('2. 浏览器不支持')
+      console.warn('3. 权限被拒绝')
+      
+      // 提供用户友好的降级方案 - 显示文本让用户手动复制
+      ElMessageBox.alert(
+        `从远程获取到剪贴板内容：\n\n${text}\n\n请手动选择并复制此文本到本地剪贴板。`,
+        '远程剪贴板内容',
+        {
+          confirmButtonText: '知道了',
+          type: 'info',
+          customStyle: {
+            'word-break': 'break-all',
+            'white-space': 'pre-wrap'
+          }
+        }
+      )
       return
     }
     
     await navigator.clipboard.writeText(text)
     lastLocalClipboard = text
     console.log('📋 [前端] 本地剪贴板写入成功')
+    ElMessage.success('远程剪贴板内容已复制到本地')
   } catch (e) {
     console.error('📋 [前端] 写入本地剪贴板失败:', e)
     
-    // 不再使用 document.execCommand 降级方案，避免干扰视频流
+    // 权限被拒绝或其他错误时的降级方案
+    ElMessageBox.alert(
+      `从远程获取到剪贴板内容：\n\n${text}\n\n请手动选择并复制此文本到本地剪贴板。`,
+      '无法自动写入剪贴板',
+      {
+        confirmButtonText: '知道了',
+        type: 'warning',
+        customStyle: {
+          'word-break': 'break-all',
+          'white-space': 'pre-wrap'
+        }
+      }
+    )
   }
 }
 
 // 远程到本地：获取Agent剪贴板内容到本地
 const testRemoteToLocal = async () => {
   console.log('📋 [前端] 远程到本地：获取Agent剪贴板内容')
+  isUserRequestedClipboard = true // 标记为用户主动请求
   sendControlMessage(MSG_TYPES.CLIPBOARD_GET)
 }
 
