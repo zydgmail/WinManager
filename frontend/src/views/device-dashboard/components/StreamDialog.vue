@@ -715,7 +715,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
   if (!isControlEnabled.value) return
 
   event.preventDefault()
-  const keysym = convertKeyToGuacamole(event)
+  const keysym = convertKeyToKeysym(event)
   if (keysym) {
     const keyStr = convertKeysymToString(keysym)
     debug('⌨️ 按键按下:', {
@@ -742,7 +742,7 @@ const handleKeyUp = (event: KeyboardEvent) => {
   if (!isControlEnabled.value) return
 
   event.preventDefault()
-  const keysym = convertKeyToGuacamole(event)
+  const keysym = convertKeyToKeysym(event)
   if (keysym) {
     const keyStr = convertKeysymToString(keysym)
     debug('⌨️ 按键释放:', {
@@ -912,8 +912,8 @@ const handleMouseLeave = () => {
   }
 }
 
-// 简单的键盘码转换（基于重构前项目的实现）
-const convertKeyToGuacamole = (event: KeyboardEvent): number | null => {
+// 键盘事件转换为键符（keysym）编码
+const convertKeyToKeysym = (event: KeyboardEvent): number | null => {
   // 这里实现基本的键盘码转换，可以根据需要扩展
   const keyMap: Record<string, number> = {
     'Backspace': 65288,

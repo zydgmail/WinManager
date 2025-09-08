@@ -177,7 +177,7 @@ export const deviceApi = {
 
   // 发送鼠标事件（通过WebSocket实现，这里暂时保留接口但不实际调用）
   sendMouseEvent: (_id: number, _event: { type: string; x: number; y: number; button: number }) => {
-    // 鼠标事件通过WebSocket或Guacamole处理，不需要HTTP API
+    // 鼠标事件通过WebSocket处理，不需要HTTP API
     return Promise.resolve();
   },
 

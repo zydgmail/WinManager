@@ -58,7 +58,6 @@
     "dayjs": "^1.11.13",
     "echarts": "^5.6.0",
     "element-plus": "^2.9.8",
-    "guacamole-common-js": "^1.5.0",
     "jmuxer": "^2.0.7",
     "js-cookie": "^3.0.5",
     "localforage": "^1.10.0",
