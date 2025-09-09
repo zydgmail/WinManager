@@ -13,23 +13,23 @@ import (
 // 统一的日志接口，供项目其他包使用
 var (
 	// Info 信息级别日志
-	Info = log.Info
+	Info  = log.Info
 	Infof = log.Infof
 
 	// Debug 调试级别日志
-	Debug = log.Debug
+	Debug  = log.Debug
 	Debugf = log.Debugf
 
 	// Warn 警告级别日志
-	Warn = log.Warn
+	Warn  = log.Warn
 	Warnf = log.Warnf
 
 	// Error 错误级别日志
-	Error = log.Error
+	Error  = log.Error
 	Errorf = log.Errorf
 
 	// Fatal 致命错误日志
-	Fatal = log.Fatal
+	Fatal  = log.Fatal
 	Fatalf = log.Fatalf
 
 	// WithError 带错误的日志
@@ -76,13 +76,26 @@ func (f *CustomFormatter) Format(entry *log.Entry) ([]byte, error) {
 		funcName = "unknown"
 	}
 
+	// 构建日志消息，包含错误信息
+	var message string
+	if len(entry.Data) > 0 {
+		// 如果有额外数据（如错误信息），将其添加到消息中
+		var dataParts []string
+		for key, value := range entry.Data {
+			dataParts = append(dataParts, fmt.Sprintf("%s=%v", key, value))
+		}
+		message = fmt.Sprintf("%s [%s]", entry.Message, strings.Join(dataParts, ", "))
+	} else {
+		message = entry.Message
+	}
+
 	// 格式: 【日志等级】【日期时间】【文件路径】【函数名】日志消息
 	logLine := fmt.Sprintf("【%s】【%s】【%s】【%s】%s\n",
 		strings.ToUpper(entry.Level.String()),
 		entry.Time.Format("2006-01-02 15:04:05"),
 		fileInfo,
 		funcName,
-		entry.Message,
+		message,
 	)
 
 	return []byte(logLine), nil
