@@ -24,7 +24,7 @@ build-linux:
 # 运行
 .PHONY: run
 run: build
-	@$(BUILD_DIR)/$(BINARY_NAME) --http=:8080
+	@$(BUILD_DIR)/$(BINARY_NAME) --http=:9090
 
 # 帮助
 .PHONY: help

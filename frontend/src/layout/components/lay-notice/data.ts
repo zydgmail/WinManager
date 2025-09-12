@@ -28,7 +28,7 @@ export const noticesData: TabItem[] = [
     list: [
       {
         avatar: "https://xiaoxian521.github.io/hyperlink/svg/smile1.svg",
-        title: "小铭 评论了你",
+        title: "Adon_Z 评论了你",
         description: "诚在于心，信在于行，诚信在于心行合一。",
         datetime: "今天",
         type: "2"
@@ -68,7 +68,7 @@ export const noticesData: TabItem[] = [
       {
         avatar: "",
         title: "版本发布",
-        description: "指派小铭于 2024-06-18 前完成更新并发布",
+        description: "指派Adon_Z于 2024-06-18 前完成更新并发布",
         datetime: "",
         extra: "已耗时 8 天",
         status: "warning",
